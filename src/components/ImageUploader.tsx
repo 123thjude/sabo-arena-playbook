@@ -5,7 +5,29 @@ import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { uploadImage } from '@/lib/image-upload';
 import { useUploadedImages } from '@/hooks/useUploadedImages';
-import { Upload, Image as ImageIcon, Copy, CheckCircle2, Loader2, X, Trash2 } from 'lucide-react';
+import { Upload, Image as ImageIcon, Copy, CheckCircle2, Loader2, X, Trash2, ImageOff } from 'lucide-react';
+
+// Component hiển thị ảnh với fallback
+function ImageWithFallback({ src, alt, className }: { src: string; alt: string; className: string }) {
+  const [error, setError] = useState(false);
+  
+  if (error) {
+    return (
+      <div className={`${className} bg-slate-600 flex items-center justify-center`}>
+        <ImageOff className="w-6 h-6 text-slate-400" />
+      </div>
+    );
+  }
+  
+  return (
+    <img 
+      src={src} 
+      alt={alt}
+      className={className}
+      onError={() => setError(true)}
+    />
+  );
+}
 
 export default function ImageUploader() {
   const { images, loading: imagesLoading, fetchImages, deleteImage } = useUploadedImages();
@@ -115,7 +137,7 @@ export default function ImageUploader() {
               className="bg-slate-700 border-slate-600 text-white cursor-pointer"
             />
             <p className="text-xs text-slate-400 mt-1">
-              Chấp nhận: JPG, PNG, WEBP, GIF. Tối đa 5MB
+              Chấp nhận: JPG, PNG, WEBP, GIF. Tối đa 10MB • Powered by Cloudinary
             </p>
           </div>
 
@@ -180,7 +202,7 @@ export default function ImageUploader() {
               <div className="space-y-3">
                 {images.map((img) => (
                   <div key={img.id} className="flex items-center gap-3 p-3 bg-slate-700/50 rounded border border-slate-600">
-                    <img 
+                    <ImageWithFallback 
                       src={img.public_url} 
                       alt={img.file_name}
                       className="w-16 h-16 object-cover rounded"

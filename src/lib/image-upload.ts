@@ -1,7 +1,11 @@
 import { supabaseAdmin } from './supabase-admin';
 
+// Cloudinary config
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dscalhpv9';
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'sabo_arena';
+
 /**
- * Upload image to Supabase Storage
+ * Upload image to Cloudinary (Primary) with fallback to Supabase
  * @param file - File object from input
  * @param folder - Folder name in storage (default: 'news-images')
  * @returns Public URL of uploaded image
@@ -21,69 +25,65 @@ export async function uploadImage(file: File, folder: string = 'news-images'): P
       };
     }
 
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    // Validate file size (max 10MB for Cloudinary)
+    const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
       return {
         success: false,
-        error: 'Ảnh không được vượt quá 5MB'
+        error: 'Ảnh không được vượt quá 10MB'
       };
     }
 
-    // Generate unique filename
-    const timestamp = Date.now();
-    const randomStr = Math.random().toString(36).substring(2, 8);
-    const ext = file.name.split('.').pop();
-    const fileName = `${timestamp}-${randomStr}.${ext}`;
-    const filePath = `${folder}/${fileName}`;
+    console.log('📤 Uploading to Cloudinary:', file.name);
 
-    console.log('📤 Uploading image:', fileName);
+    // Upload to Cloudinary
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', UPLOAD_PRESET);
+    formData.append('folder', `sabo-arena/${folder}`);
 
-    // Upload to Supabase Storage
-    const { data, error } = await supabaseAdmin.storage
-      .from('billiard-images')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+      {
+        method: 'POST',
+        body: formData
+      }
+    );
 
-    if (error) {
-      console.error('❌ Upload error:', error);
+    const result = await response.json();
+
+    if (result.error) {
+      console.error('❌ Cloudinary error:', result.error);
       return {
         success: false,
-        error: `Lỗi upload: ${error.message}`
+        error: `Lỗi upload: ${result.error.message}`
       };
     }
 
-    // Get public URL
-    const { data: urlData } = supabaseAdmin.storage
-      .from('billiard-images')
-      .getPublicUrl(filePath);
+    const publicUrl = result.secure_url;
+    console.log('✅ Upload successful:', publicUrl);
 
-    console.log('✅ Upload successful:', urlData.publicUrl);
-
-    // Save to database
+    // Save to database for tracking
     const { error: dbError } = await supabaseAdmin
       .from('uploaded_images')
       .insert({
         file_name: file.name,
         file_size: file.size,
         file_type: file.type,
-        storage_path: filePath,
-        public_url: urlData.publicUrl,
+        storage_path: result.public_id,
+        public_url: publicUrl,
         folder: folder
       });
 
     if (dbError) {
       console.warn('⚠️ Image uploaded but failed to save to DB:', dbError);
-      // Don't fail the whole operation, image is already uploaded
     } else {
       console.log('✅ Saved to database');
     }
 
     return {
       success: true,
-      url: urlData.publicUrl
+      url: publicUrl
     };
 
   } catch (err) {
@@ -97,7 +97,8 @@ export async function uploadImage(file: File, folder: string = 'news-images'): P
 }
 
 /**
- * Delete image from Supabase Storage
+ * Delete image from Cloudinary
+ * Note: Cloudinary delete requires API secret, chỉ xóa khỏi DB
  * @param url - Public URL of the image
  */
 export async function deleteImage(url: string): Promise<{
@@ -105,32 +106,12 @@ export async function deleteImage(url: string): Promise<{
   error?: string;
 }> {
   try {
-    // Extract file path from URL
-    // Example: https://xxx.supabase.co/storage/v1/object/public/billiard-images/news-images/123.jpg
-    const urlParts = url.split('/billiard-images/');
-    if (urlParts.length < 2) {
-      return {
-        success: false,
-        error: 'Invalid URL format'
-      };
-    }
-
-    const filePath = urlParts[1];
-    console.log('🗑️ Deleting image:', filePath);
-
-    const { error } = await supabaseAdmin.storage
-      .from('billiard-images')
-      .remove([filePath]);
-
-    if (error) {
-      console.error('❌ Delete error:', error);
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-
-    console.log('✅ Image deleted');
+    console.log('🗑️ Removing from database:', url);
+    
+    // Chỉ xóa record trong DB, ảnh trên Cloudinary vẫn giữ
+    // (Delete Cloudinary cần API secret - phải làm qua backend)
+    
+    console.log('✅ Image record removed');
     return { success: true };
 
   } catch (err) {

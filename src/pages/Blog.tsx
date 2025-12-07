@@ -206,6 +206,27 @@ export default function Blog() {
               </p>
             </div>
           )}
+
+          {/* Internal Links Section - SEO */}
+          <div className="mt-16 pt-8 border-t border-border">
+            <h2 className="text-xl font-bold text-center mb-6">
+              {language === 'vi' ? '🎱 Khám Phá Thêm' : '🎱 Explore More'}
+            </h2>
+            <div className="flex flex-wrap justify-center gap-3 text-sm">
+              <Link to="/rankings" className="px-4 py-2 rounded-full bg-muted hover:bg-gold/20 transition-colors flex items-center gap-2">
+                🏆 {language === 'vi' ? 'Bảng Xếp Hạng ELO' : 'ELO Rankings'}
+              </Link>
+              <Link to="/clubs" className="px-4 py-2 rounded-full bg-muted hover:bg-gold/20 transition-colors flex items-center gap-2">
+                🏠 {language === 'vi' ? 'Tìm CLB Bi-a' : 'Find Clubs'}
+              </Link>
+              <Link to="/live-matches" className="px-4 py-2 rounded-full bg-muted hover:bg-gold/20 transition-colors flex items-center gap-2">
+                📺 {language === 'vi' ? 'Xem Trận Đấu Live' : 'Watch Live'}
+              </Link>
+              <Link to="/" className="px-4 py-2 rounded-full bg-muted hover:bg-gold/20 transition-colors flex items-center gap-2">
+                🏠 {language === 'vi' ? 'Trang Chủ' : 'Home'}
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </>

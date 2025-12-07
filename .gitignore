@@ -30,3 +30,4 @@ dist-ssr
 TOKENS.md
 *.token
 secrets.txt
+.env*.local

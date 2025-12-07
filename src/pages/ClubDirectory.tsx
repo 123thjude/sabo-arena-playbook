@@ -21,9 +21,10 @@ import {
   ExternalLink
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import SEOHead, { SEO_PAGES } from "@/components/SEOHead";
 
 const ClubDirectory = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [locationFilter, setLocationFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("rating");
@@ -101,6 +102,12 @@ const ClubDirectory = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead 
+        title={language === 'vi' ? SEO_PAGES.clubs.title : 'Vietnam Billiards Clubs Directory - Find Clubs Near You'}
+        description={language === 'vi' ? SEO_PAGES.clubs.description : 'Find billiards clubs near you on SABO ARENA. Reviews, addresses, table count, prices. Over 500 clubs nationwide!'}
+        canonical={SEO_PAGES.clubs.canonical}
+        keywords={SEO_PAGES.clubs.keywords}
+      />
       {/* Hero Section */}
       <section className="py-24 bg-slate-900 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-gold/10 via-transparent to-gold/5" />

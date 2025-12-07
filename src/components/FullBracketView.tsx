@@ -133,12 +133,12 @@ export const FullBracketView: React.FC<FullBracketViewProps> = ({
   const groupWinners = [...wbWinner, ...lbAWinner, ...lbBWinner];
 
   // Layout configuration
-  const CARD_WIDTH = 280;
-  const CARD_HEIGHT = 120;
+  const CARD_WIDTH = 200; // Giảm từ 280 xuống 200
+  const CARD_HEIGHT = 90; // Giảm từ 120 xuống 90
   const HORIZONTAL_GAP = 120;
-  const VERTICAL_GAP = 40;
-  const SECTION_VERTICAL_SPACING = 100;
-  const HEADER_HEIGHT = 50; // Space for bracket title headers
+  const VERTICAL_GAP = 5; // Giảm từ 10 xuống 5
+  const SECTION_VERTICAL_SPACING = 30; // Giảm từ 40 xuống 30
+  const HEADER_HEIGHT = 40; // Giảm từ 50 xuống 40
 
   // Calculate positions for each bracket with centered tournament tree layout
   const positionedMatches = useMemo(() => {
@@ -189,13 +189,14 @@ export const FullBracketView: React.FC<FullBracketViewProps> = ({
     return positioned;
   }, [wbMatches, lbAMatches, lbBMatches]);
 
-  // Calculate total dimensions
+  // Calculate total dimensions with extra padding on the right
+  const EXTRA_RIGHT_PADDING = 200; // Extra space on the right to prevent cutoff
   const totalWidth = Math.max(
     ...positionedMatches.wb.map(m => m.x + CARD_WIDTH),
     ...positionedMatches.lbA.map(m => m.x + CARD_WIDTH),
     ...positionedMatches.lbB.map(m => m.x + CARD_WIDTH),
     1000
-  );
+  ) + EXTRA_RIGHT_PADDING;
 
   const totalHeight = Math.max(
     ...positionedMatches.wb.map(m => m.y + m.height),
@@ -229,13 +230,13 @@ export const FullBracketView: React.FC<FullBracketViewProps> = ({
           style={{ zIndex: 0 }}
         >
           {/* Winner Bracket connections */}
-          {renderConnections(positionedMatches.wb, '#22c55e', 2)}
+          {renderConnections(positionedMatches.wb, '#22c55e', 2, CARD_WIDTH)}
           
           {/* Loser Bracket A connections */}
-          {renderConnections(positionedMatches.lbA, '#f97316', 2)}
+          {renderConnections(positionedMatches.lbA, '#f97316', 2, CARD_WIDTH)}
           
           {/* Loser Bracket B connections */}
-          {renderConnections(positionedMatches.lbB, '#ef4444', 2)}
+          {renderConnections(positionedMatches.lbB, '#ef4444', 2, CARD_WIDTH)}
           
           {/* Connections from WB to LB-A (losers) */}
           {renderLoserConnections(
@@ -365,7 +366,8 @@ function groupByRound(matches: BracketMatch[]): { [round: number]: BracketMatch[
 function renderConnections(
   matches: PositionedMatch[],
   color: string,
-  strokeWidth: number
+  strokeWidth: number,
+  cardWidth: number
 ): React.ReactNode[] {
   const connections: React.ReactNode[] = [];
   const rounds = groupByRound(matches);
@@ -390,7 +392,7 @@ function renderConnections(
             <path
               key={`${pos1.id}-${posNext.id}`}
               d={createPath(
-                pos1.x + 280,
+                pos1.x + cardWidth,
                 pos1.y + pos1.height / 2,
                 posNext.x,
                 posNext.y + posNext.height / 2
@@ -411,7 +413,7 @@ function renderConnections(
             <path
               key={`${pos2.id}-${posNext.id}`}
               d={createPath(
-                pos2.x + 280,
+                pos2.x + cardWidth,
                 pos2.y + pos2.height / 2,
                 posNext.x,
                 posNext.y + posNext.height / 2

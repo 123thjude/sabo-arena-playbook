@@ -34,7 +34,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import Navigation from "@/components/Navigation";
-import ImageUploader from "@/components/ImageUploader";
+import GoogleDriveImageUploader from "@/components/GoogleDriveImageUploader";
 import { useNewsManagement, NewsArticle } from "@/hooks/useNewsManagement";
 import { useNewsStats } from "@/hooks/useNewsStats";
 import { useAISettings } from "@/hooks/useAISettings";
@@ -346,9 +346,9 @@ const AINewsAdminV2 = () => {
                 </Card>
               </TabsContent>
 
-              {/* TAB 2: UPLOAD ẢNH */}
+              {/* TAB 2: UPLOAD ẢNH - Google Drive */}
               <TabsContent value="upload" className="space-y-6">
-                <ImageUploader />
+                <GoogleDriveImageUploader />
               </TabsContent>
 
               {/* TAB 3: THỐNG KÊ */}

@@ -65,6 +65,7 @@ const Footer = () => {
               <li><Link to="/rankings" className="text-slate-400 hover:text-gold transition-colors text-sm">{t("nav.rankings")}</Link></li>
               <li><Link to="/clubs" className="text-slate-400 hover:text-gold transition-colors text-sm">{t("nav.clubs")}</Link></li>
               <li><Link to="/live-matches" className="text-slate-400 hover:text-gold transition-colors text-sm">{t("footer.liveMatches")}</Link></li>
+              <li><a href="https://sabo-arena-docs.vercel.app" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-gold transition-colors text-sm">{t("nav.docs")}</a></li>
             </ul>
           </motion.div>
 
@@ -104,8 +105,8 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="w-4 h-4 text-gold" />
-                <a href="tel:+84123456789" className="text-slate-400 hover:text-gold transition-colors text-sm">
-                  +84 123 456 789
+                <a href="tel:0329640232" className="text-slate-400 hover:text-gold transition-colors text-sm">
+                  0329 640 232
                 </a>
               </div>
               <div className="flex items-start space-x-3">

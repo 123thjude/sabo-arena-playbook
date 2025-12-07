@@ -121,7 +121,10 @@ const HeroSection = () => {
             className="hidden lg:flex flex-col justify-center space-y-6"
           >
             {/* Tournament Card */}
-            <Card className="p-6 border-2 border-gold bg-card/90 backdrop-blur-sm hover:shadow-hover hover:scale-105 transition-all duration-300 cursor-pointer">
+            <Card className="p-8 border-2 border-gold bg-gradient-to-br from-card/95 via-card/90 to-gold/5 backdrop-blur-sm hover:shadow-[0_0_30px_rgba(212,175,55,0.3)] hover:scale-105 transition-all duration-300 cursor-pointer relative overflow-hidden">
+              {/* Decorative glow effect */}
+              <div className="absolute -top-20 -right-20 w-40 h-40 bg-gold/10 rounded-full blur-3xl" />
+              
               {isLoadingNext ? (
                 <div className="space-y-4">
                   <Skeleton className="h-4 w-32" />
@@ -130,46 +133,63 @@ const HeroSection = () => {
                   <Skeleton className="h-8 w-24" />
                 </div>
               ) : nextTournament ? (
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <p className="text-xs font-bold text-gold tracking-wider uppercase mb-2">
-                      {t("hero.upcomingTournament")}
-                    </p>
-                    <h3 className="text-xl font-bold mb-2">
+                <div className="flex items-start justify-between relative z-10">
+                  <div className="flex-1 space-y-4">
+                    <div className="inline-flex items-center gap-2 bg-gold/20 px-3 py-1 rounded-full">
+                      <span className="w-2 h-2 bg-gold rounded-full animate-pulse" />
+                      <p className="text-xs font-bold text-gold tracking-wider uppercase">
+                        {t("hero.upcomingTournament")}
+                      </p>
+                    </div>
+                    
+                    <h3 className="text-2xl font-black text-foreground leading-tight">
                       {nextTournament.title}
                     </h3>
-                    <div className="space-y-2 mb-4">
-                      <p className="text-sm text-muted-foreground flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gold" />
-                        {formatDate(nextTournament.start_date)}
+                    
+                    <div className="space-y-3 py-2">
+                      <p className="text-sm text-muted-foreground flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-gold/10">
+                          <Calendar className="w-4 h-4 text-gold" />
+                        </span>
+                        <span className="font-medium">{formatDate(nextTournament.start_date)}</span>
                       </p>
-                      <p className="text-sm text-muted-foreground flex items-center gap-2">
-                        <Users className="w-4 h-4 text-gold" />
-                        {nextTournament.current_participants}/{nextTournament.max_participants} {t("tournaments.participants")}
+                      <p className="text-sm text-muted-foreground flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-gold/10">
+                          <Users className="w-4 h-4 text-gold" />
+                        </span>
+                        <span className="font-medium">{nextTournament.current_participants}/{nextTournament.max_participants} {t("tournaments.participants")}</span>
                       </p>
                       {Boolean(nextTournament.prize_pool) && (
-                        <p className="text-sm font-bold text-gold flex items-center gap-2">
-                          <Trophy className="w-4 h-4" />
-                          {formatCurrency(nextTournament.prize_pool)}
+                        <p className="text-base font-bold text-gold flex items-center gap-3">
+                          <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-gold/20">
+                            <Trophy className="w-4 h-4" />
+                          </span>
+                          <span className="text-lg">{formatCurrency(nextTournament.prize_pool)}</span>
                         </p>
                       )}
                     </div>
+                    
                     <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="font-bold border-gold text-gold hover:bg-gold hover:text-black"
-                      onClick={handleJoinTournament}
+                      variant="default" 
+                      size="lg" 
+                      className="font-bold bg-gold text-black hover:bg-gold/90 shadow-lg shadow-gold/20 mt-2"
+                      onClick={() => navigate(`/tournaments/${nextTournament.id}`)}
                     >
                       {t("hero.joinNow")}
                       <ArrowRight className="ml-2 w-4 h-4" />
                     </Button>
                   </div>
-                  {nextTournament.club?.logo_url && (
+                  
+                  {nextTournament.club?.logo_url ? (
                     <img 
                       src={nextTournament.club.logo_url} 
                       alt={nextTournament.club.name}
-                      className="w-12 h-12 rounded-lg object-cover ml-4"
+                      className="w-16 h-16 rounded-xl object-cover ml-4 ring-2 ring-gold/30 shadow-lg"
                     />
+                  ) : (
+                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center ml-4 ring-2 ring-gold/30">
+                      <Trophy className="w-8 h-8 text-gold" />
+                    </div>
                   )}
                 </div>
               ) : (

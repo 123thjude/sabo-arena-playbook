@@ -1,98 +1,163 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- ===== MAIN PAGES ===== -->
   <url>
     <loc>https://saboarena.com/</loc>
-    <lastmod>2025-11-11</lastmod>
+    <lastmod>2025-12-07</lastmod>
     <changefreq>daily</changefreq>
-    <priority>1</priority>
+    <priority>1.0</priority>
   </url>
   <url>
     <loc>https://saboarena.com/rankings</loc>
-    <lastmod>2025-11-11</lastmod>
+    <lastmod>2025-12-07</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://saboarena.com/blog</loc>
-    <lastmod>2025-11-11</lastmod>
+    <lastmod>2025-12-07</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://saboarena.com/clubs</loc>
-    <lastmod>2025-11-11</lastmod>
+    <lastmod>2025-12-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://saboarena.com/live-matches</loc>
-    <lastmod>2025-11-11</lastmod>
+    <lastmod>2025-12-07</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://saboarena.com/profile</loc>
-    <lastmod>2025-11-11</lastmod>
+    <lastmod>2025-12-07</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://saboarena.com/privacy-policy</loc>
-    <lastmod>2025-11-11</lastmod>
+    <lastmod>2025-12-07</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://saboarena.com/terms-of-service</loc>
-    <lastmod>2025-11-11</lastmod>
+    <lastmod>2025-12-07</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
+
+  <!-- ===== SEO ARTICLES (Original 8) ===== -->
   <url>
-    <loc>https://saboarena.com/news/top-10-co-thu-bia-xuat-sac-nhat-viet-nam-2025</loc>
-    <lastmod>2025-11-11</lastmod>
+    <loc>https://saboarena.com/news/huong-dan-choi-bida-cho-nguoi-moi-2025</loc>
+    <lastmod>2025-12-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://saboarena.com/news/live-test-1762857944330</loc>
-    <lastmod>2025-11-11</lastmod>
+    <loc>https://saboarena.com/news/luat-choi-bida-8-bi-chi-tiet-2025</loc>
+    <lastmod>2025-12-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://saboarena.com/news/live-test-1762857777716</loc>
-    <lastmod>2025-11-11</lastmod>
+    <loc>https://saboarena.com/news/ky-thuat-cam-co-bida-dung-cach-2025</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://saboarena.com/news/he-thong-xep-hang-elo-bida-la-gi</loc>
+    <lastmod>2025-12-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://saboarena.com/news/test-automation-phase3-1762857588205</loc>
-    <lastmod>2025-11-11</lastmod>
+    <loc>https://saboarena.com/news/huong-dan-tham-gia-giai-dau-sabo-arena</loc>
+    <lastmod>2025-12-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://saboarena.com/news/test-automation-phase3-1762857099092</loc>
-    <lastmod>2025-11-11</lastmod>
+    <loc>https://saboarena.com/news/tips-leo-elo-bida-nhanh-chong-2025</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://saboarena.com/news/cau-lac-bo-bida-viet-nam-2025</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://saboarena.com/news/huong-dan-choi-bida-9-bi-chi-tiet-2025</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- ===== SEO ARTICLES (NEW 10 - Hot Keywords) ===== -->
+  <url>
+    <loc>https://saboarena.com/news/bida-phom-la-gi-luat-choi-chi-tiet-2025</loc>
+    <lastmod>2025-12-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://saboarena.com/news/test-automation-phase3-1762856777573</loc>
-    <lastmod>2025-11-11</lastmod>
+    <loc>https://saboarena.com/news/bida-3-bang-carom-luat-choi-chi-tiet-2025</loc>
+    <lastmod>2025-12-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://saboarena.com/news/test-automation-phase3-1762856440775</loc>
-    <lastmod>2025-11-11</lastmod>
+    <loc>https://saboarena.com/news/gia-ban-bida-2025-bang-gia-moi-nhat</loc>
+    <lastmod>2025-12-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://saboarena.com/news/sabo-arena-nen-tang-thi-dau-bida-1-viet-nam</loc>
-    <lastmod>2025-11-11</lastmod>
+    <loc>https://saboarena.com/news/cach-danh-bida-xoay-ky-thuat-spin-2025</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://saboarena.com/news/top-10-quan-bida-sai-gon-dep-nhat-2025</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://saboarena.com/news/cach-chon-co-bida-phu-hop-huong-dan-mua-2025</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://saboarena.com/news/top-10-quan-bida-ha-noi-dep-nhat-2025</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://saboarena.com/news/hoc-choi-bida-o-dau-trung-tam-day-bida-2025</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://saboarena.com/news/bida-online-la-gi-top-game-bi-a-online-2025</loc>
+    <lastmod>2025-12-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://saboarena.com/news/lich-giai-dau-bida-2025-cac-giai-lon</loc>
+    <lastmod>2025-12-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>

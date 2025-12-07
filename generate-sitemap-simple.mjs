@@ -7,15 +7,26 @@ const __dirname = dirname(__filename);
 
 // Static pages
 const STATIC_PAGES = [
-  { url: '/', priority: 1, changefreq: 'daily', lastmod: '2025-11-11' },
-  { url: '/rankings', priority: 0.9, changefreq: 'daily', lastmod: '2025-11-11' },
-  { url: '/blog', priority: 0.9, changefreq: 'daily', lastmod: '2025-11-11' },
-  { url: '/clubs', priority: 0.8, changefreq: 'weekly', lastmod: '2025-11-11' },
-  { url: '/live-matches', priority: 0.9, changefreq: 'hourly', lastmod: '2025-11-11' },
-  { url: '/profile', priority: 0.6, changefreq: 'monthly', lastmod: '2025-11-11' },
+  { url: '/', priority: 1, changefreq: 'daily', lastmod: '2025-12-07' },
+  { url: '/rankings', priority: 0.9, changefreq: 'daily', lastmod: '2025-12-07' },
+  { url: '/blog', priority: 0.9, changefreq: 'daily', lastmod: '2025-12-07' },
+  { url: '/clubs', priority: 0.8, changefreq: 'weekly', lastmod: '2025-12-07' },
+  { url: '/live-matches', priority: 0.9, changefreq: 'hourly', lastmod: '2025-12-07' },
+  { url: '/profile', priority: 0.6, changefreq: 'monthly', lastmod: '2025-12-07' },
+  { url: '/privacy-policy', priority: 0.3, changefreq: 'yearly', lastmod: '2025-12-07' },
+  { url: '/terms-of-service', priority: 0.3, changefreq: 'yearly', lastmod: '2025-12-07' },
+  // Older articles
   { url: '/news/sabo-arena-nen-tang-thi-dau-bida-1-viet-nam', priority: 0.9, changefreq: 'monthly', lastmod: '2025-11-11' },
-  { url: '/privacy-policy', priority: 0.3, changefreq: 'yearly', lastmod: '2025-11-11' },
-  { url: '/terms-of-service', priority: 0.3, changefreq: 'yearly', lastmod: '2025-11-11' }
+  { url: '/news/top-10-co-thu-bia-vietnam-2025', priority: 0.8, changefreq: 'monthly', lastmod: '2025-11-11' },
+  // NEW SEO Articles (December 2025)
+  { url: '/news/huong-dan-choi-bida-cho-nguoi-moi-2025', priority: 0.9, changefreq: 'monthly', lastmod: '2025-12-07' },
+  { url: '/news/luat-choi-bida-8-bi-chi-tiet-2025', priority: 0.9, changefreq: 'monthly', lastmod: '2025-12-07' },
+  { url: '/news/ky-thuat-cam-co-bida-dung-cach-2025', priority: 0.8, changefreq: 'monthly', lastmod: '2025-12-07' },
+  { url: '/news/he-thong-xep-hang-elo-bida-la-gi', priority: 0.9, changefreq: 'monthly', lastmod: '2025-12-07' },
+  { url: '/news/huong-dan-tham-gia-giai-dau-sabo-arena', priority: 0.9, changefreq: 'monthly', lastmod: '2025-12-07' },
+  { url: '/news/tips-leo-elo-bida-nhanh-chong-2025', priority: 0.8, changefreq: 'monthly', lastmod: '2025-12-07' },
+  { url: '/news/cau-lac-bo-bida-viet-nam-2025', priority: 0.8, changefreq: 'monthly', lastmod: '2025-12-07' },
+  { url: '/news/huong-dan-choi-bida-9-bi-chi-tiet-2025', priority: 0.8, changefreq: 'monthly', lastmod: '2025-12-07' },
 ];
 
 function generateSitemapXML(urls) {

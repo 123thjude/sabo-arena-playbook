@@ -289,6 +289,69 @@ const NewsDetail = () => {
               </Card>
             </motion.div>
           )}
+
+          {/* Internal Links - Related Content */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="mt-12 pt-8 border-t border-slate-700"
+          >
+            <h3 className="text-xl font-bold text-white mb-6">
+              {language === "vi" ? "📚 Bài Viết Liên Quan" : "📚 Related Articles"}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Link 
+                to="/news/huong-dan-choi-bida-cho-nguoi-moi-2025" 
+                className="p-4 rounded-lg bg-slate-800/50 border border-slate-700 hover:border-gold/50 transition-colors"
+              >
+                <h4 className="font-semibold text-white hover:text-gold transition-colors">
+                  Hướng dẫn chơi bida cho người mới
+                </h4>
+                <p className="text-sm text-slate-400 mt-1">Kiến thức cơ bản cho người mới bắt đầu</p>
+              </Link>
+              <Link 
+                to="/news/luat-choi-bida-8-bi-chi-tiet-2025" 
+                className="p-4 rounded-lg bg-slate-800/50 border border-slate-700 hover:border-gold/50 transition-colors"
+              >
+                <h4 className="font-semibold text-white hover:text-gold transition-colors">
+                  Luật chơi bida 8 bi chi tiết
+                </h4>
+                <p className="text-sm text-slate-400 mt-1">Quy định chính thức cho bida 8 bi</p>
+              </Link>
+              <Link 
+                to="/news/ky-thuat-cam-co-bida-dung-cach-2025" 
+                className="p-4 rounded-lg bg-slate-800/50 border border-slate-700 hover:border-gold/50 transition-colors"
+              >
+                <h4 className="font-semibold text-white hover:text-gold transition-colors">
+                  Kỹ thuật cầm cơ bida đúng cách
+                </h4>
+                <p className="text-sm text-slate-400 mt-1">Nâng cao kỹ năng cầm cơ</p>
+              </Link>
+              <Link 
+                to="/news/tips-leo-elo-bida-nhanh-chong-2025" 
+                className="p-4 rounded-lg bg-slate-800/50 border border-slate-700 hover:border-gold/50 transition-colors"
+              >
+                <h4 className="font-semibold text-white hover:text-gold transition-colors">
+                  10 Tips leo ELO bida nhanh chóng
+                </h4>
+                <p className="text-sm text-slate-400 mt-1">Bí quyết tăng rank hiệu quả</p>
+              </Link>
+            </div>
+
+            {/* Quick Links */}
+            <div className="mt-8 flex flex-wrap gap-3 justify-center">
+              <Link to="/rankings" className="px-4 py-2 rounded-full bg-gold/10 text-gold hover:bg-gold/20 transition-colors text-sm font-medium">
+                🏆 Xem Bảng Xếp Hạng
+              </Link>
+              <Link to="/clubs" className="px-4 py-2 rounded-full bg-gold/10 text-gold hover:bg-gold/20 transition-colors text-sm font-medium">
+                🏠 Tìm CLB Bi-a
+              </Link>
+              <Link to="/blog" className="px-4 py-2 rounded-full bg-gold/10 text-gold hover:bg-gold/20 transition-colors text-sm font-medium">
+                📖 Xem Tất Cả Bài Viết
+              </Link>
+            </div>
+          </motion.div>
         </article>
       </div>
       <Footer />

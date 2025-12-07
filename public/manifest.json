@@ -1,0 +1,71 @@
+{
+  "name": "SABO ARENA",
+  "short_name": "SABO",
+  "description": "Nền tảng thi đấu bi-a chuyên nghiệp #1 Việt Nam",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#f59e0b",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "vi",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.jpg",
+      "sizes": "1200x630",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "SABO ARENA Homepage"
+    }
+  ],
+  "categories": ["sports", "games", "entertainment"],
+  "prefer_related_applications": true,
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.saboarena.app",
+      "id": "com.saboarena.app"
+    },
+    {
+      "platform": "itunes",
+      "url": "https://apps.apple.com/app/sabo-arena/id123456789"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Xếp Hạng",
+      "short_name": "Rankings",
+      "description": "Xem bảng xếp hạng ELO bi-a",
+      "url": "/rankings",
+      "icons": [{ "src": "/favicon.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Trận Đấu",
+      "short_name": "Matches",
+      "description": "Xem trận đấu trực tiếp",
+      "url": "/live-matches",
+      "icons": [{ "src": "/favicon.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Blog",
+      "short_name": "Blog",
+      "description": "Tin tức và hướng dẫn bi-a",
+      "url": "/blog",
+      "icons": [{ "src": "/favicon.png", "sizes": "96x96" }]
+    }
+  ]
+}

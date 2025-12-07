@@ -1,0 +1,42 @@
+{
+  "lastUpdated": "2025-12-03T01:10:47.454Z",
+  "docsCount": 6,
+  "docs": [
+    {
+      "id": "3ffa5fa80f7dc3eea897acbf4c04f9a8",
+      "title": "❓ Câu hỏi thường gặp (FAQ)",
+      "path": "faq\\general.md",
+      "chunksCount": 4
+    },
+    {
+      "id": "1da178f63abe4dc26b6f415957387b99",
+      "title": "💰 SABO Token",
+      "path": "features\\sabo-token.md",
+      "chunksCount": 3
+    },
+    {
+      "id": "19043fdb75aee45e0ac3fc8ba3467e86",
+      "title": "🏆 Hệ thống giải đấu",
+      "path": "features\\tournaments.md",
+      "chunksCount": 2
+    },
+    {
+      "id": "a4aa43a460345afa15e26b21d50d54e8",
+      "title": "🎱 SABO Arena là gì?",
+      "path": "getting-started\\introduction.md",
+      "chunksCount": 2
+    },
+    {
+      "id": "17ab3d6966f2034f8f314c49c07d5f41",
+      "title": "🚀 Hướng dẫn đăng ký tài khoản",
+      "path": "getting-started\\registration.md",
+      "chunksCount": 2
+    },
+    {
+      "id": "1daacca3720005ebfc5267390f6ae670",
+      "title": "📚 SABO Arena Documentation",
+      "path": "README.md",
+      "chunksCount": 2
+    }
+  ]
+}

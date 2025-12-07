@@ -58,9 +58,10 @@ export const useTournamentBracket = (tournamentId: string) => {
         throw new Error("Tournament ID is required");
       }
 
-      // Fetch all matches with player information
-      const { data: matches, error } = await supabase
-        .from("matches")
+      // First try to fetch from bracket_matches (new table)
+      // Note: Using separate query for players to avoid FK relationship issues
+      let { data: matches, error } = await supabase
+        .from("bracket_matches")
         .select(`
           id,
           tournament_id,
@@ -81,43 +82,138 @@ export const useTournamentBracket = (tournamentId: string) => {
           winner_advances_to,
           loser_advances_to,
           created_at,
-          updated_at,
-          player1:users!player1_id(
-            id,
-            display_name,
-            username,
-            full_name,
-            avatar_url,
-            rank
-          ),
-          player2:users!player2_id(
-            id,
-            display_name,
-            username,
-            full_name,
-            avatar_url,
-            rank
-          )
+          updated_at
         `)
         .eq("tournament_id", tournamentId)
         .order("round_number", { ascending: true })
         .order("match_number", { ascending: true });
 
-      if (error) {
-        throw error;
+      // If bracket_matches succeeded, fetch player data separately
+      if (!error && matches && matches.length > 0) {
+        // Get unique player IDs
+        const playerIds = new Set<string>();
+        matches.forEach((m: any) => {
+          if (m.player1_id) playerIds.add(m.player1_id);
+          if (m.player2_id) playerIds.add(m.player2_id);
+        });
+
+        // Fetch player data from users table (includes rank)
+        let playersMap: Record<string, any> = {};
+        if (playerIds.size > 0) {
+          const { data: players } = await supabase
+            .from("users")
+            .select("id, full_name, display_name, avatar_url, rank")
+            .in("id", Array.from(playerIds));
+          
+          if (players) {
+            players.forEach((p: any) => {
+              playersMap[p.id] = {
+                id: p.id,
+                name: p.display_name || p.full_name,
+                full_name: p.full_name,
+                display_name: p.display_name,
+                avatar_url: p.avatar_url,
+                rank: p.rank
+              };
+            });
+          }
+        }
+
+        // Attach player data to matches
+        matches = matches.map((m: any) => ({
+          ...m,
+          player1: m.player1_id ? playersMap[m.player1_id] || null : null,
+          player2: m.player2_id ? playersMap[m.player2_id] || null : null
+        }));
+      }
+
+      // If bracket_matches fails or is empty, try the matches table (legacy)
+      if (error || !matches || matches.length === 0) {
+        console.log("Trying legacy matches table...");
+        const legacyResult = await supabase
+          .from("matches")
+          .select(`
+            id,
+            tournament_id,
+            round_number,
+            match_number,
+            bracket_position,
+            bracket_type,
+            bracket_group,
+            player1_id,
+            player2_id,
+            player1_score,
+            player2_score,
+            winner_id,
+            status,
+            scheduled_time,
+            start_time,
+            end_time,
+            winner_advances_to,
+            loser_advances_to,
+            created_at,
+            updated_at,
+            player1:users!player1_id(
+              id,
+              display_name,
+              username,
+              full_name,
+              avatar_url,
+              rank
+            ),
+            player2:users!player2_id(
+              id,
+              display_name,
+              username,
+              full_name,
+              avatar_url,
+              rank
+            )
+          `)
+          .eq("tournament_id", tournamentId)
+          .order("round_number", { ascending: true })
+          .order("match_number", { ascending: true });
+        
+        if (legacyResult.error) {
+          throw legacyResult.error;
+        }
+        matches = legacyResult.data;
       }
 
       if (!matches || matches.length === 0) {
         return null;
       }
 
+      // Transform bracket_matches format to match expected structure
+      const transformedMatches = matches.map((match: any) => ({
+        ...match,
+        player1: match.player1 ? {
+          id: match.player1.id,
+          display_name: match.player1.name || match.player1.display_name,
+          username: match.player1.username,
+          full_name: match.player1.name || match.player1.full_name,
+          avatar_url: match.player1.avatar_url,
+          rank: match.player1.rank
+        } : null,
+        player2: match.player2 ? {
+          id: match.player2.id,
+          display_name: match.player2.name || match.player2.display_name,
+          username: match.player2.username,
+          full_name: match.player2.name || match.player2.full_name,
+          avatar_url: match.player2.avatar_url,
+          rank: match.player2.rank
+        } : null
+      }));
+
       // Structure the bracket data
-      const bracketStructure = structureBracketData(matches as SupabaseMatch[]);
+      const bracketStructure = structureBracketData(transformedMatches as SupabaseMatch[]);
       
       return bracketStructure;
     },
     enabled: !!tournamentId,
-    staleTime: 1 * 60 * 1000, // 1 minute - brackets update frequently during tournaments
+    staleTime: 30 * 1000, // 30 seconds - refresh more often
+    refetchOnMount: true, // Always refetch when component mounts
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 };
 
@@ -348,5 +444,5 @@ export function getPlayerDisplayName(match: BracketMatch, playerNum: 1 | 2): str
     return 'TBD';
   }
   
-  return player?.full_name || player?.display_name || player?.username || name || 'TBD';
+  return player?.display_name || player?.username || player?.full_name || name || 'TBD';
 }

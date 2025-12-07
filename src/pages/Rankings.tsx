@@ -14,9 +14,10 @@ import AppDownloadButtons from "@/components/AppDownloadButtons";
 import { Search, Trophy, Filter, Medal, Award, Users, RotateCcw } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Player } from "@/types/database";
+import SEOHead, { SEO_PAGES } from "@/components/SEOHead";
 
 const Rankings = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [rankFilter, setRankFilter] = useState<string>("all");
   const [leaderboardType, setLeaderboardType] = useState<string>("elo");
@@ -109,6 +110,12 @@ const Rankings = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead 
+        title={language === 'vi' ? SEO_PAGES.rankings.title : 'Billiards ELO Rankings - Top Players Vietnam 2025'}
+        description={language === 'vi' ? SEO_PAGES.rankings.description : 'View real-time billiards ELO rankings. Top 100 best players in Vietnam, detailed stats, match history. Updated continuously!'}
+        canonical={SEO_PAGES.rankings.canonical}
+        keywords={SEO_PAGES.rankings.keywords}
+      />
       {/* Hero Section */}
       <section className="py-24 bg-slate-900 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-gold/10 via-transparent to-gold/5" />

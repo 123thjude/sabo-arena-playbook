@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import React, { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTournamentDetails } from "@/hooks/useTournamentDetails";
 import { useTournamentMatches, TournamentMatch } from "@/hooks/useTournamentMatches";
@@ -10,9 +11,15 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import TournamentRegistration from "@/components/TournamentRegistration";
 import Navigation from "@/components/Navigation";
 import { DE64BracketVisualization } from "@/components/DE64BracketVisualization";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { advancePlayersFromMatch } from "@/services/bracketAdvancementService";
 import { 
   Calendar, 
   Users, 
@@ -21,11 +28,59 @@ import {
   Clock, 
   Award,
   ArrowLeft,
-  Share2
+  Share2,
+  Edit3,
+  Check,
+  X,
+  Minus,
+  Plus
 } from "lucide-react";
 
-// Match Result Card Component
-const MatchResultCard = ({ match, index }: { match: TournamentMatch; index: number }) => {
+// Helper function to format tournament description with auto line breaks
+const formatTournamentDescription = (description: string) => {
+  // Define patterns that should trigger a new line
+  const lineBreakPatterns = [
+    /([•●○◦▪▸►])/g,  // Bullet points
+    /(📍|🎱|💰|👑|🏆|⏰|📅|🎯|⚠️|📌|🔥|✅|❌|🥇|🥈|🥉|💵|🎖️|🏅|⭐)/g,  // Emojis that typically start sections
+    /(Thời gian:|Địa điểm:|Lệ phí:|Hạng thi đấu:|Số lượng|CƠ CẤU GIẢI THƯỞNG|THỂ LỆ THI ĐẤU|TỶ LỆ CHẤP|QUY ĐỊNH TỪ BAN TỔ CHỨC)/gi,
+    /(Champions:|Runner-up:|3rd Place|Top \d+-\d+:)/gi,
+    /(Tứ kết:|Bán kết:|Chung kết:)/gi,
+  ];
+
+  // First, split by existing line breaks
+  let lines = description.split(/\n/);
+  
+  // Process each line and split further based on patterns
+  const processedLines: string[] = [];
+  
+  lines.forEach(line => {
+    let currentLine = line.trim();
+    if (!currentLine) return;
+    
+    // Check for bullet/emoji patterns and split
+    // Split by common separators that indicate new items
+    const parts = currentLine.split(/(?=•)|(?=📍)|(?=🎱)|(?=💰)|(?=👑)|(?=🏆)|(?=⏰)|(?=📅)|(?=🎯)|(?=⚠️)|(?=📌)|(?=🔥)|(?=✅)|(?=❌)|(?=🥇)|(?=🥈)|(?=🥉)|(?=💵)|(?=🎖️)|(?=🏅)|(?=⭐)/);
+    
+    parts.forEach(part => {
+      const trimmedPart = part.trim();
+      if (trimmedPart) {
+        processedLines.push(trimmedPart);
+      }
+    });
+  });
+  
+  return processedLines;
+};
+
+// Match Result Card Component with Score Entry
+interface MatchResultCardProps {
+  match: TournamentMatch;
+  index: number;
+  canEdit?: boolean;
+  onEditScore?: (match: TournamentMatch) => void;
+}
+
+const MatchResultCard = ({ match, index, canEdit = false, onEditScore }: MatchResultCardProps) => {
   const getStatusText = (status: string) => {
     switch (status) {
       case "completed": return "Hoàn thành";
@@ -34,6 +89,8 @@ const MatchResultCard = ({ match, index }: { match: TournamentMatch; index: numb
       default: return "Chưa xác định";
     }
   };
+
+  const hasPlayers = match.player1_id && match.player2_id;
 
   return (
     <div className="p-3 md:p-4 bg-slate-700/50 rounded-lg border border-slate-600">
@@ -50,6 +107,18 @@ const MatchResultCard = ({ match, index }: { match: TournamentMatch; index: numb
             >
               {getStatusText(match.status)}
             </Badge>
+            {/* Edit button for CLB owner */}
+            {canEdit && hasPlayers && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 px-2 text-xs border-amber-500/50 text-amber-400 hover:bg-amber-500/20"
+                onClick={() => onEditScore?.(match)}
+              >
+                <Edit3 className="w-3 h-3 mr-1" />
+                Nhập điểm
+              </Button>
+            )}
           </div>
         </div>
 
@@ -129,10 +198,124 @@ const MatchResultCard = ({ match, index }: { match: TournamentMatch; index: numb
 const TournamentDetails = () => {
   const { id } = useParams<{ id: string }>();
   const { t } = useLanguage();
+  const queryClient = useQueryClient();
   
   const { data: tournament, isLoading: tournamentLoading } = useTournamentDetails(id || "");
   const { data: matches, isLoading: matchesLoading } = useTournamentMatches(id || "");
   const { data: participants, isLoading: participantsLoading } = useTournamentParticipants(id || "");
+
+  // Score entry state
+  const [editingMatch, setEditingMatch] = useState<TournamentMatch | null>(null);
+  const [score1, setScore1] = useState("");
+  const [score2, setScore2] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Check if current user can edit (is CLB owner)
+  const [canEdit, setCanEdit] = useState(false);
+  
+  React.useEffect(() => {
+    const checkEditPermission = async () => {
+      if (!tournament?.club_id) return;
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setCanEdit(false);
+        return;
+      }
+      
+      // Check if user is owner of the club
+      const { data: club } = await supabase
+        .from('clubs')
+        .select('owner_id')
+        .eq('id', tournament.club_id)
+        .single();
+      
+      setCanEdit(club?.owner_id === user.id);
+    };
+    
+    checkEditPermission();
+  }, [tournament?.club_id]);
+
+  // Handle score submission
+  const handleSaveScore = async () => {
+    if (!editingMatch) return;
+    
+    const p1Score = Number.parseInt(score1, 10);
+    const p2Score = Number.parseInt(score2, 10);
+    
+    if (Number.isNaN(p1Score) || Number.isNaN(p2Score) || p1Score < 0 || p2Score < 0) {
+      toast.error("Điểm số không hợp lệ");
+      return;
+    }
+
+    // Validate: Score cannot be 0-0
+    if (p1Score === 0 && p2Score === 0) {
+      toast.error("Tỷ số không thể là 0-0");
+      return;
+    }
+
+    // Must have a winner (no draws)
+    if (p1Score === p2Score) {
+      toast.error("Phải có người thắng (không được hòa)");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Determine winner
+      const winnerId = p1Score > p2Score ? editingMatch.player1_id : editingMatch.player2_id;
+      
+      // 1. Update match score and winner
+      const { error } = await supabase
+        .from('matches')
+        .update({
+          player1_score: p1Score,
+          player2_score: p2Score,
+          winner_id: winnerId,
+          status: 'completed'
+        })
+        .eq('id', editingMatch.id);
+      
+      if (error) throw error;
+      
+      console.log('✅ Match score updated, now advancing players...');
+      
+      // 2. Auto-advance winner and loser to next matches
+      const advanceResult = await advancePlayersFromMatch(editingMatch.id);
+      
+      if (advanceResult.success) {
+        if (advanceResult.isFinal) {
+          toast.success("🏆 Giải đấu đã hoàn thành! Đã xác định nhà vô địch!");
+        } else {
+          toast.success("Đã cập nhật điểm số và đẩy người chơi vào trận tiếp theo!");
+        }
+      } else {
+        console.warn('⚠️ Score saved but advancement had issues:', advanceResult.message);
+        toast.success("Đã cập nhật điểm số!");
+      }
+      
+      // Refresh matches data
+      queryClient.invalidateQueries({ queryKey: ['tournament-matches', id] });
+      
+      // Close modal
+      setEditingMatch(null);
+      setScore1("");
+      setScore2("");
+    } catch (error) {
+      console.error('Error updating score:', error);
+      toast.error("Không thể cập nhật điểm số");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Open edit modal with current scores
+  const handleEditScore = (match: TournamentMatch) => {
+    setEditingMatch(match);
+    setScore1(match.player1_score?.toString() || "");
+    setScore2(match.player2_score?.toString() || "");
+  };
 
   if (tournamentLoading) {
     return (
@@ -380,9 +563,33 @@ const TournamentDetails = () => {
                       </div>
                       
                       {tournament.description && (
-                        <div>
-                          <p className="text-xs md:text-sm text-slate-400 mb-2">{t("tournaments.description")}</p>
-                          <p className="leading-relaxed text-sm md:text-base">{tournament.description}</p>
+                        <div className="mt-4 pt-4 border-t border-slate-600">
+                          <p className="text-xs md:text-sm text-slate-400 mb-3 font-semibold uppercase tracking-wide">{t("tournaments.description")}</p>
+                          <div className="space-y-2">
+                            {formatTournamentDescription(tournament.description).map((line, index) => {
+                              // Check if line starts with emoji or special character
+                              const isHeader = /^(📍|🎱|💰|👑|🏆|⏰|📅|🎯|⚠️|📌|🔥)/.test(line);
+                              const isWarning = /^⚠️/.test(line) || line.includes('QUY ĐỊNH') || line.includes('PHÁT HIỆN GIAN LẬN');
+                              const isPrize = line.includes('Champions:') || line.includes('Runner-up:') || line.includes('3rd Place') || line.includes('GIẢI THƯỞNG');
+                              const isBullet = /^[•●○◦▪▸►]/.test(line);
+                              
+                              return (
+                                <div 
+                                  key={index}
+                                  className={`
+                                    text-sm md:text-base leading-relaxed
+                                    ${isHeader ? 'font-semibold text-white mt-3 first:mt-0' : ''}
+                                    ${isWarning ? 'text-yellow-400 bg-yellow-400/10 px-3 py-2 rounded-lg border border-yellow-400/20' : ''}
+                                    ${isPrize ? 'text-gold font-medium' : ''}
+                                    ${isBullet ? 'pl-2' : ''}
+                                    ${!isHeader && !isWarning && !isPrize ? 'text-slate-300' : ''}
+                                  `}
+                                >
+                                  {line}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -505,99 +712,180 @@ const TournamentDetails = () => {
                       </div>
                     ) : matches && matches.length > 0 ? (
                       <Tabs defaultValue="all" className="w-full">
-                        {/* Sub-tabs for filtering matches by group */}
-                        <TabsList className="grid w-full grid-cols-6 mb-4 bg-slate-700/50 text-xs">
-                          <TabsTrigger value="all" className="text-xs md:text-sm px-1 md:px-3">
-                            Tất cả ({matches.length})
-                          </TabsTrigger>
-                          <TabsTrigger value="a" className="text-xs md:text-sm px-1 md:px-3">
-                            Bảng A ({matches.filter(m => m.bracket_group === 'A').length})
-                          </TabsTrigger>
-                          <TabsTrigger value="b" className="text-xs md:text-sm px-1 md:px-3">
-                            Bảng B ({matches.filter(m => m.bracket_group === 'B').length})
-                          </TabsTrigger>
-                          <TabsTrigger value="c" className="text-xs md:text-sm px-1 md:px-3">
-                            Bảng C ({matches.filter(m => m.bracket_group === 'C').length})
-                          </TabsTrigger>
-                          <TabsTrigger value="d" className="text-xs md:text-sm px-1 md:px-3">
-                            Bảng D ({matches.filter(m => m.bracket_group === 'D').length})
-                          </TabsTrigger>
-                          <TabsTrigger value="cross" className="text-xs md:text-sm px-1 md:px-3">
-                            Cross ({matches.filter(m => 
-                              m.bracket_group?.toUpperCase() === 'CROSS' ||
-                              (m.bracket_group !== 'A' && m.bracket_group !== 'B' && 
-                               m.bracket_group !== 'C' && m.bracket_group !== 'D')
-                            ).length})
-                          </TabsTrigger>
-                        </TabsList>
+                        {/* Check if tournament has groups (DE64) or no groups (DE16) */}
+                        {(() => {
+                          const hasGroups = matches.some(m => 
+                            m.bracket_group === 'A' || m.bracket_group === 'B' || 
+                            m.bracket_group === 'C' || m.bracket_group === 'D'
+                          );
+                          
+                          if (hasGroups) {
+                            // DE64 format with groups A, B, C, D, Cross
+                            return (
+                              <>
+                                <TabsList className="grid w-full grid-cols-6 mb-4 bg-slate-700/50 text-xs">
+                                  <TabsTrigger value="all" className="text-xs md:text-sm px-1 md:px-3">
+                                    Tất cả ({matches.length})
+                                  </TabsTrigger>
+                                  <TabsTrigger value="a" className="text-xs md:text-sm px-1 md:px-3">
+                                    Bảng A ({matches.filter(m => m.bracket_group === 'A').length})
+                                  </TabsTrigger>
+                                  <TabsTrigger value="b" className="text-xs md:text-sm px-1 md:px-3">
+                                    Bảng B ({matches.filter(m => m.bracket_group === 'B').length})
+                                  </TabsTrigger>
+                                  <TabsTrigger value="c" className="text-xs md:text-sm px-1 md:px-3">
+                                    Bảng C ({matches.filter(m => m.bracket_group === 'C').length})
+                                  </TabsTrigger>
+                                  <TabsTrigger value="d" className="text-xs md:text-sm px-1 md:px-3">
+                                    Bảng D ({matches.filter(m => m.bracket_group === 'D').length})
+                                  </TabsTrigger>
+                                  <TabsTrigger value="cross" className="text-xs md:text-sm px-1 md:px-3">
+                                    Cross ({matches.filter(m => 
+                                      m.bracket_group?.toUpperCase() === 'CROSS' ||
+                                      (m.bracket_group !== 'A' && m.bracket_group !== 'B' && 
+                                       m.bracket_group !== 'C' && m.bracket_group !== 'D')
+                                    ).length})
+                                  </TabsTrigger>
+                                </TabsList>
 
-                        {/* All matches */}
-                        <TabsContent value="all" className="space-y-3 md:space-y-4 mt-0">
-                          {[...matches]
-                            .sort((a, b) => {
-                              if (tournament.status === "completed") {
-                                return (b.round_number || 0) - (a.round_number || 0);
-                              }
-                              return (b.match_number || 0) - (a.match_number || 0);
-                            })
-                            .map((match, index) => (
-                              <MatchResultCard key={match.id} match={match} index={index} />
-                            ))}
-                        </TabsContent>
+                                {/* All matches */}
+                                <TabsContent value="all" className="space-y-3 md:space-y-4 mt-0">
+                                  {[...matches]
+                                    .sort((a, b) => (b.round_number || 0) - (a.round_number || 0))
+                                    .map((match, index) => (
+                                      <MatchResultCard key={match.id} match={match} index={index} canEdit={canEdit} onEditScore={handleEditScore} />
+                                    ))}
+                                </TabsContent>
 
-                        {/* Group A matches */}
-                        <TabsContent value="a" className="space-y-3 md:space-y-4 mt-0">
-                          {[...matches]
-                            .filter(m => m.bracket_group === 'A')
-                            .sort((a, b) => (b.round_number || 0) - (a.round_number || 0))
-                            .map((match, index) => (
-                              <MatchResultCard key={match.id} match={match} index={index} />
-                            ))}
-                        </TabsContent>
+                                {/* Group A matches */}
+                                <TabsContent value="a" className="space-y-3 md:space-y-4 mt-0">
+                                  {[...matches]
+                                    .filter(m => m.bracket_group === 'A')
+                                    .sort((a, b) => (b.round_number || 0) - (a.round_number || 0))
+                                    .map((match, index) => (
+                                      <MatchResultCard key={match.id} match={match} index={index} canEdit={canEdit} onEditScore={handleEditScore} />
+                                    ))}
+                                </TabsContent>
 
-                        {/* Group B matches */}
-                        <TabsContent value="b" className="space-y-3 md:space-y-4 mt-0">
-                          {[...matches]
-                            .filter(m => m.bracket_group === 'B')
-                            .sort((a, b) => (b.round_number || 0) - (a.round_number || 0))
-                            .map((match, index) => (
-                              <MatchResultCard key={match.id} match={match} index={index} />
-                            ))}
-                        </TabsContent>
+                                {/* Group B matches */}
+                                <TabsContent value="b" className="space-y-3 md:space-y-4 mt-0">
+                                  {[...matches]
+                                    .filter(m => m.bracket_group === 'B')
+                                    .sort((a, b) => (b.round_number || 0) - (a.round_number || 0))
+                                    .map((match, index) => (
+                                      <MatchResultCard key={match.id} match={match} index={index} canEdit={canEdit} onEditScore={handleEditScore} />
+                                    ))}
+                                </TabsContent>
 
-                        {/* Group C matches */}
-                        <TabsContent value="c" className="space-y-3 md:space-y-4 mt-0">
-                          {[...matches]
-                            .filter(m => m.bracket_group === 'C')
-                            .sort((a, b) => (b.round_number || 0) - (a.round_number || 0))
-                            .map((match, index) => (
-                              <MatchResultCard key={match.id} match={match} index={index} />
-                            ))}
-                        </TabsContent>
+                                {/* Group C matches */}
+                                <TabsContent value="c" className="space-y-3 md:space-y-4 mt-0">
+                                  {[...matches]
+                                    .filter(m => m.bracket_group === 'C')
+                                    .sort((a, b) => (b.round_number || 0) - (a.round_number || 0))
+                                    .map((match, index) => (
+                                      <MatchResultCard key={match.id} match={match} index={index} canEdit={canEdit} onEditScore={handleEditScore} />
+                                    ))}
+                                </TabsContent>
 
-                        {/* Group D matches */}
-                        <TabsContent value="d" className="space-y-3 md:space-y-4 mt-0">
-                          {[...matches]
-                            .filter(m => m.bracket_group === 'D')
-                            .sort((a, b) => (b.round_number || 0) - (a.round_number || 0))
-                            .map((match, index) => (
-                              <MatchResultCard key={match.id} match={match} index={index} />
-                            ))}
-                        </TabsContent>
+                                {/* Group D matches */}
+                                <TabsContent value="d" className="space-y-3 md:space-y-4 mt-0">
+                                  {[...matches]
+                                    .filter(m => m.bracket_group === 'D')
+                                    .sort((a, b) => (b.round_number || 0) - (a.round_number || 0))
+                                    .map((match, index) => (
+                                      <MatchResultCard key={match.id} match={match} index={index} canEdit={canEdit} onEditScore={handleEditScore} />
+                                    ))}
+                                </TabsContent>
 
-                        {/* Cross Finals matches */}
-                        <TabsContent value="cross" className="space-y-3 md:space-y-4 mt-0">
-                          {[...matches]
-                            .filter(m => 
-                              m.bracket_group?.toUpperCase() === 'CROSS' ||
-                              (m.bracket_group !== 'A' && m.bracket_group !== 'B' && 
-                               m.bracket_group !== 'C' && m.bracket_group !== 'D')
-                            )
-                            .sort((a, b) => (b.round_number || 0) - (a.round_number || 0))
-                            .map((match, index) => (
-                              <MatchResultCard key={match.id} match={match} index={index} />
-                            ))}
-                        </TabsContent>
+                                {/* Cross Finals matches */}
+                                <TabsContent value="cross" className="space-y-3 md:space-y-4 mt-0">
+                                  {[...matches]
+                                    .filter(m => 
+                                      m.bracket_group?.toUpperCase() === 'CROSS' ||
+                                      (m.bracket_group !== 'A' && m.bracket_group !== 'B' && 
+                                       m.bracket_group !== 'C' && m.bracket_group !== 'D')
+                                    )
+                                    .sort((a, b) => (b.round_number || 0) - (a.round_number || 0))
+                                    .map((match, index) => (
+                                      <MatchResultCard key={match.id} match={match} index={index} canEdit={canEdit} onEditScore={handleEditScore} />
+                                    ))}
+                                </TabsContent>
+                              </>
+                            );
+                          } else {
+                            // DE16 format with WB, LB-A, LB-B, SABO
+                            return (
+                              <>
+                                <TabsList className="grid w-full grid-cols-5 mb-4 bg-slate-700/50 text-xs">
+                                  <TabsTrigger value="all" className="text-xs md:text-sm px-1 md:px-3">
+                                    Tất cả ({matches.length})
+                                  </TabsTrigger>
+                                  <TabsTrigger value="wb" className="text-xs md:text-sm px-1 md:px-3 text-green-400">
+                                    WB ({matches.filter(m => m.bracket_type === 'WB').length})
+                                  </TabsTrigger>
+                                  <TabsTrigger value="lba" className="text-xs md:text-sm px-1 md:px-3 text-orange-400">
+                                    LB-A ({matches.filter(m => m.bracket_type === 'LB-A').length})
+                                  </TabsTrigger>
+                                  <TabsTrigger value="lbb" className="text-xs md:text-sm px-1 md:px-3 text-red-400">
+                                    LB-B ({matches.filter(m => m.bracket_type === 'LB-B').length})
+                                  </TabsTrigger>
+                                  <TabsTrigger value="sabo" className="text-xs md:text-sm px-1 md:px-3 text-purple-400">
+                                    SABO ({matches.filter(m => m.bracket_type === 'SABO').length})
+                                  </TabsTrigger>
+                                </TabsList>
+
+                                {/* All matches */}
+                                <TabsContent value="all" className="space-y-3 md:space-y-4 mt-0">
+                                  {[...matches]
+                                    .sort((a, b) => (a.match_number || 0) - (b.match_number || 0))
+                                    .map((match, index) => (
+                                      <MatchResultCard key={match.id} match={match} index={index} canEdit={canEdit} onEditScore={handleEditScore} />
+                                    ))}
+                                </TabsContent>
+
+                                {/* WB matches */}
+                                <TabsContent value="wb" className="space-y-3 md:space-y-4 mt-0">
+                                  {[...matches]
+                                    .filter(m => m.bracket_type === 'WB')
+                                    .sort((a, b) => (a.round_number || 0) - (b.round_number || 0) || (a.match_number || 0) - (b.match_number || 0))
+                                    .map((match, index) => (
+                                      <MatchResultCard key={match.id} match={match} index={index} canEdit={canEdit} onEditScore={handleEditScore} />
+                                    ))}
+                                </TabsContent>
+
+                                {/* LB-A matches */}
+                                <TabsContent value="lba" className="space-y-3 md:space-y-4 mt-0">
+                                  {[...matches]
+                                    .filter(m => m.bracket_type === 'LB-A')
+                                    .sort((a, b) => (a.round_number || 0) - (b.round_number || 0) || (a.match_number || 0) - (b.match_number || 0))
+                                    .map((match, index) => (
+                                      <MatchResultCard key={match.id} match={match} index={index} canEdit={canEdit} onEditScore={handleEditScore} />
+                                    ))}
+                                </TabsContent>
+
+                                {/* LB-B matches */}
+                                <TabsContent value="lbb" className="space-y-3 md:space-y-4 mt-0">
+                                  {[...matches]
+                                    .filter(m => m.bracket_type === 'LB-B')
+                                    .sort((a, b) => (a.round_number || 0) - (b.round_number || 0) || (a.match_number || 0) - (b.match_number || 0))
+                                    .map((match, index) => (
+                                      <MatchResultCard key={match.id} match={match} index={index} canEdit={canEdit} onEditScore={handleEditScore} />
+                                    ))}
+                                </TabsContent>
+
+                                {/* SABO Finals matches */}
+                                <TabsContent value="sabo" className="space-y-3 md:space-y-4 mt-0">
+                                  {[...matches]
+                                    .filter(m => m.bracket_type === 'SABO')
+                                    .sort((a, b) => (a.round_number || 0) - (b.round_number || 0) || (a.match_number || 0) - (b.match_number || 0))
+                                    .map((match, index) => (
+                                      <MatchResultCard key={match.id} match={match} index={index} canEdit={canEdit} onEditScore={handleEditScore} />
+                                    ))}
+                                </TabsContent>
+                              </>
+                            );
+                          }
+                        })()}
                       </Tabs>
                     ) : (
                       <div className="text-center py-8 text-slate-400">
@@ -668,6 +956,103 @@ const TournamentDetails = () => {
         </div>
       </section>
       </div>
+
+      {/* Score Entry Modal */}
+      <Dialog open={!!editingMatch} onOpenChange={(open) => !open && setEditingMatch(null)}>
+        <DialogContent className="bg-slate-800 border-slate-700">
+          <DialogHeader>
+            <DialogTitle className="text-white">Nhập điểm số</DialogTitle>
+          </DialogHeader>
+          
+          {editingMatch && (
+            <div className="space-y-4">
+              {/* Match info */}
+              <div className="text-center text-sm text-slate-400">
+                Trận #{editingMatch.match_number || ""} • {editingMatch.bracket_type || ""}
+              </div>
+              
+              {/* Player 1 */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 flex-1">
+                  {editingMatch.player1?.avatar_url ? (
+                    <img 
+                      src={editingMatch.player1.avatar_url} 
+                      alt=""
+                      className="w-10 h-10 rounded-full border-2 border-blue-500"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500/30 to-blue-500/50 flex items-center justify-center text-blue-300 font-bold">
+                      P1
+                    </div>
+                  )}
+                  <span className="font-semibold text-white truncate">
+                    {getDisplayName(editingMatch.player1?.display_name, editingMatch.player1?.username, editingMatch.player1?.full_name) || "TBD"}
+                  </span>
+                </div>
+                <Input
+                  type="number"
+                  min="0"
+                  max="99"
+                  value={score1}
+                  onChange={(e) => setScore1(e.target.value)}
+                  className="w-20 text-center text-xl font-bold bg-slate-700 border-slate-600"
+                  placeholder="0"
+                />
+              </div>
+
+              {/* VS */}
+              <div className="text-center text-slate-500 font-semibold">VS</div>
+
+              {/* Player 2 */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 flex-1">
+                  {editingMatch.player2?.avatar_url ? (
+                    <img 
+                      src={editingMatch.player2.avatar_url} 
+                      alt=""
+                      className="w-10 h-10 rounded-full border-2 border-red-500"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500/30 to-red-500/50 flex items-center justify-center text-red-300 font-bold">
+                      P2
+                    </div>
+                  )}
+                  <span className="font-semibold text-white truncate">
+                    {getDisplayName(editingMatch.player2?.display_name, editingMatch.player2?.username, editingMatch.player2?.full_name) || "TBD"}
+                  </span>
+                </div>
+                <Input
+                  type="number"
+                  min="0"
+                  max="99"
+                  value={score2}
+                  onChange={(e) => setScore2(e.target.value)}
+                  className="w-20 text-center text-xl font-bold bg-slate-700 border-slate-600"
+                  placeholder="0"
+                />
+              </div>
+
+              {/* Buttons */}
+              <DialogFooter className="gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setEditingMatch(null)}
+                  className="border-slate-600"
+                >
+                  Hủy
+                </Button>
+                <Button 
+                  onClick={handleSaveScore}
+                  disabled={isSubmitting}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {isSubmitting ? "Đang lưu..." : "Lưu điểm"}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

@@ -22,6 +22,8 @@ import {
   MapPin,
   Filter
 } from "lucide-react";
+import SEOHead, { SEO_PAGES } from "@/components/SEOHead";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface LiveMatch {
   id: string;
@@ -51,6 +53,7 @@ interface LiveMatch {
 const LiveMatches = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const { language } = useLanguage();
 
   // Fetch live matches from database
   const { data: matches = [], isLoading, error } = useQuery({
@@ -297,6 +300,12 @@ const LiveMatches = () => {
 
   return (
     <>
+      <SEOHead 
+        title={language === 'vi' ? SEO_PAGES.liveMatches.title : 'Live Billiards Matches - SABO ARENA Live Stream'}
+        description={language === 'vi' ? SEO_PAGES.liveMatches.description : 'Watch live billiards matches in real-time. Live scores, commentary, detailed statistics from SABO ARENA.'}
+        canonical={SEO_PAGES.liveMatches.canonical}
+        keywords={SEO_PAGES.liveMatches.keywords}
+      />
       <Navigation />
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pt-20">
         <div className="container mx-auto px-4 py-8">

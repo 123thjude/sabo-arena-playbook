@@ -62,8 +62,8 @@ export default function FullTournamentBracket() {
             status,
             winner_advances_to,
             loser_advances_to,
-            player1:profiles!matches_player1_id_fkey(id, full_name, avatar_url),
-            player2:profiles!matches_player2_id_fkey(id, full_name, avatar_url)
+            player1:users!player1_id(id, display_name, username, full_name, avatar_url, rank),
+            player2:users!player2_id(id, display_name, username, full_name, avatar_url, rank)
           `)
           .eq('tournament_id', id)
           .order('display_order');
@@ -85,22 +85,24 @@ export default function FullTournamentBracket() {
             round_number: match.round_number,
             match_number: match.display_order,
             player1_id: match.player1_id,
-            player1_name: player1Data?.full_name || null,
+            player1_name: player1Data?.display_name || player1Data?.username || player1Data?.full_name || null,
             player1: player1Data ? {
               id: player1Data.id,
-              display_name: player1Data.full_name,
-              username: null,
+              display_name: player1Data.display_name,
+              username: player1Data.username,
               full_name: player1Data.full_name,
               avatar_url: player1Data.avatar_url,
+              rank: player1Data.rank,
             } : null,
             player2_id: match.player2_id,
-            player2_name: player2Data?.full_name || null,
+            player2_name: player2Data?.display_name || player2Data?.username || player2Data?.full_name || null,
             player2: player2Data ? {
               id: player2Data.id,
-              display_name: player2Data.full_name,
-              username: null,
+              display_name: player2Data.display_name,
+              username: player2Data.username,
               full_name: player2Data.full_name,
               avatar_url: player2Data.avatar_url,
+              rank: player2Data.rank,
             } : null,
             player1_score: match.player1_score,
             player2_score: match.player2_score,

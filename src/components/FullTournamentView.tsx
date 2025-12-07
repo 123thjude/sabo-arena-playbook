@@ -466,14 +466,13 @@ function renderCrossFinalsConnections(
 
   // === QUARTERS → SEMIS (HIGHLIGHTED CONNECTIONS) ===
   
-  // Left quarters (top + bottom) → Left Semi
+  // Left quarters → Left Semi (M117)
   const leftSemi = semis[0];
   if (leftSemi && topLeftQuarter && bottomLeftQuarter) {
     const semiPos = findPos(leftSemi);
     const tlqPos = findPos(topLeftQuarter);
-    const blqPos = findPos(bottomLeftQuarter);
     
-    // Top-Left Quarter → Left Semi
+    // Top-Left Quarter → Left Semi (M113 → M117)
     if (semiPos && tlqPos) {
       connections.push(
         <path
@@ -491,54 +490,59 @@ function renderCrossFinalsConnections(
         />
       );
     }
+  }
+
+  // ⚠️ FIX: M114 → M117 (đường dọc thẳng)
+  // M114 là topRightQuarter (round2[1]) nhưng đã swap vị trí xuống bottom-left
+  const rightSemi = semis[1];
+  if (leftSemi && topRightQuarter) {
+    const semiPos = findPos(leftSemi);
+    const m114Pos = findPos(topRightQuarter);  // M114 = round2[1]
     
-    // Bottom-Left Quarter → Left Semi
-    if (semiPos && blqPos) {
+    if (semiPos && m114Pos) {
       connections.push(
-        <path
-          key={`${bottomLeftQuarter.id}-${leftSemi.id}`}
-          d={createPath(
-            blqPos.x + cardWidth / 2,
-            blqPos.y,
-            semiPos.x + cardWidth / 2,
-            semiPos.y + semiPos.height
-          )}
+        <line
+          key={`${topRightQuarter.id}-${leftSemi.id}-vertical`}
+          x1={m114Pos.x + cardWidth / 2}
+          y1={m114Pos.y}
+          x2={semiPos.x + cardWidth / 2}
+          y2={semiPos.y + semiPos.height}
           stroke="#fbbf24"
           strokeWidth={2.5}
-          fill="none"
           opacity={0.7}
         />
       );
     }
   }
 
-  // Right quarters (top + bottom) → Right Semi
-  const rightSemi = semis[1];
-  if (rightSemi && topRightQuarter && bottomRightQuarter) {
+  // ⚠️ FIX: M115 → M118 (đường dọc thẳng)
+  // M115 là bottomLeftQuarter (round2[2]) nhưng đã swap vị trí lên top-right
+  if (rightSemi && bottomLeftQuarter) {
     const semiPos = findPos(rightSemi);
-    const trqPos = findPos(topRightQuarter);
-    const brqPos = findPos(bottomRightQuarter);
+    const m115Pos = findPos(bottomLeftQuarter);  // M115 = round2[2]
     
-    // Top-Right Quarter → Right Semi
-    if (semiPos && trqPos) {
+    if (semiPos && m115Pos) {
       connections.push(
-        <path
-          key={`${topRightQuarter.id}-${rightSemi.id}`}
-          d={createPath(
-            trqPos.x + cardWidth / 2,
-            trqPos.y + trqPos.height,
-            semiPos.x + cardWidth / 2,
-            semiPos.y
-          )}
+        <line
+          key={`${bottomLeftQuarter.id}-${rightSemi.id}-vertical`}
+          x1={m115Pos.x + cardWidth / 2}
+          y1={m115Pos.y + m115Pos.height}
+          x2={semiPos.x + cardWidth / 2}
+          y2={semiPos.y}
           stroke="#fbbf24"
           strokeWidth={2.5}
-          fill="none"
           opacity={0.7}
         />
       );
     }
+  }
+
+  // Right quarters → Right Semi (M118)
+  if (rightSemi && topRightQuarter && bottomRightQuarter) {
+    const semiPos = findPos(rightSemi);
+    const brqPos = findPos(bottomRightQuarter);
     
-    // Bottom-Right Quarter → Right Semi
+    // Bottom-Right Quarter → Right Semi (M116 → M118)
     if (semiPos && brqPos) {
       connections.push(
         <path
@@ -619,7 +623,7 @@ export const FullTournamentView = ({
   groupCMatches,
   groupDMatches,
   crossMatches,
-  tournamentName = "GIẢI ĐẤU SABO DE64",
+  tournamentName = "SBP x DESTINY 9 BALL OPEN",
   isFullscreen = false
 }: FullTournamentViewProps) => {
   // Zoom state
@@ -989,7 +993,7 @@ export const FullTournamentView = ({
       const cornerStartY_Top = HEADER_HEIGHT + 100; // More top margin for trophy
       const cornerStartY_Bottom = HEADER_HEIGHT + bracketHeight - 100 - (CARD_HEIGHT * 2 + cornerVerticalGap);
       
-      // TOP-LEFT corner (MT05, MT06)
+      // TOP-LEFT corner (MT05, MT06) - KHÔNG ĐỔI
       round1Matches.slice(0, 2).forEach((match, idx) => {
         positioned.push({
           ...match,
@@ -999,27 +1003,28 @@ export const FullTournamentView = ({
         });
       });
       
-      // TOP-RIGHT corner (MT07, MT08)
+      // ⚠️ SWAP: TOP-RIGHT (M107, M108) ↔ BOTTOM-LEFT (M111, M112)
+      // TOP-RIGHT corner (MT07, MT08) - M109, M110 → ĐỔI xuống BOTTOM-LEFT
       round1Matches.slice(2, 4).forEach((match, idx) => {
         positioned.push({
           ...match,
-          x: bracketWidth - CARD_WIDTH - edgeMarginRight,
-          y: cornerStartY_Top + idx * (CARD_HEIGHT + cornerVerticalGap),
+          x: edgeMargin,  // Sang bên TRÁI
+          y: cornerStartY_Bottom + idx * (CARD_HEIGHT + cornerVerticalGap),  // Xuống DƯỚI
           height: CARD_HEIGHT
         });
       });
       
-      // BOTTOM-LEFT corner (MT09, MT10)
+      // BOTTOM-LEFT corner (MT09, MT10) - M111, M112 → ĐỔI lên TOP-RIGHT
       round1Matches.slice(4, 6).forEach((match, idx) => {
         positioned.push({
           ...match,
-          x: edgeMargin,
-          y: cornerStartY_Bottom + idx * (CARD_HEIGHT + cornerVerticalGap),
+          x: bracketWidth - CARD_WIDTH - edgeMarginRight,  // Sang bên PHẢI
+          y: cornerStartY_Top + idx * (CARD_HEIGHT + cornerVerticalGap),  // Lên TRÊN
           height: CARD_HEIGHT
         });
       });
       
-      // BOTTOM-RIGHT corner (MT11, MT12)
+      // BOTTOM-RIGHT corner (MT11, MT12) - KHÔNG ĐỔI
       round1Matches.slice(6, 8).forEach((match, idx) => {
         positioned.push({
           ...match,
@@ -1049,22 +1054,23 @@ export const FullTournamentView = ({
         });
       }
       
-      // Top-Right Quarter (MT14) - Aligned with top-right corner pair
+      // ⚠️ SWAP: M114 ↔ M115 (đổi tọa độ)
+      // Top-Right Quarter (MT14) - M114 → ĐỔI xuống BOTTOM-LEFT
       if (round2Matches[1]) {
         positioned.push({
           ...round2Matches[1],
-          x: quarterX_Right,
-          y: topCornerCenterY - CARD_HEIGHT / 2,
+          x: quarterX_Left,  // ĐỔI sang trái
+          y: bottomCornerCenterY - CARD_HEIGHT / 2,  // ĐỔI xuống dưới
           height: CARD_HEIGHT
         });
       }
       
-      // Bottom-Left Quarter (MT15) - Aligned with bottom-left corner pair
+      // Bottom-Left Quarter (MT15) - M115 → ĐỔI lên TOP-RIGHT
       if (round2Matches[2]) {
         positioned.push({
           ...round2Matches[2],
-          x: quarterX_Left,
-          y: bottomCornerCenterY - CARD_HEIGHT / 2,
+          x: quarterX_Right,  // ĐỔI sang phải
+          y: topCornerCenterY - CARD_HEIGHT / 2,  // ĐỔI lên trên
           height: CARD_HEIGHT
         });
       }

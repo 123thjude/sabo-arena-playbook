@@ -1,0 +1,7 @@
+# Redirect www to non-www (fix duplicate content)
+https://www.saboarena.com/* https://saboarena.com/:splat 301!
+
+# Redirect old URLs if any
+/en/* / 301
+/delete-account /support 301
+/support /privacy-policy 301

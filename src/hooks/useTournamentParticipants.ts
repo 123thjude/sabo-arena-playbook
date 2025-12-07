@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 export interface TournamentParticipant {
   id: string;
@@ -15,6 +16,34 @@ export interface TournamentParticipant {
 }
 
 export const useTournamentParticipants = (tournamentId: string) => {
+  const queryClient = useQueryClient();
+
+  // Set up real-time subscription
+  useEffect(() => {
+    if (!tournamentId) return;
+
+    const channel = supabase
+      .channel(`tournament_participants_${tournamentId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tournament_participants',
+          filter: `tournament_id=eq.${tournamentId}`
+        },
+        () => {
+          // Invalidate query to refetch data
+          queryClient.invalidateQueries({ queryKey: ["tournament-participants", tournamentId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [tournamentId, queryClient]);
+
   return useQuery({
     queryKey: ["tournament-participants", tournamentId],
     queryFn: async () => {
@@ -45,7 +74,7 @@ export const useTournamentParticipants = (tournamentId: string) => {
           )
         `)
         .eq("tournament_id", tournamentId)
-        .eq("status", "registered")
+        .in("status", ["registered", "confirmed", "checked_in", "pending"])
         .order("seed_number", { ascending: true, nullsFirst: false })
         .order("registered_at", { ascending: true });
 
@@ -68,6 +97,7 @@ export const useTournamentParticipants = (tournamentId: string) => {
       })) as TournamentParticipant[];
     },
     enabled: !!tournamentId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 1000, // 30 seconds (shorter for real-time feel)
+    refetchInterval: 60 * 1000, // Refetch every minute as backup
   });
 };

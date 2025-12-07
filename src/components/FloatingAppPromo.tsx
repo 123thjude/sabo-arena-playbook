@@ -16,7 +16,7 @@ export const FloatingAppPromo = () => {
         initial={{ opacity: 0, y: 100, scale: 0.8 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 100, scale: 0.8 }}
-        className="fixed bottom-6 right-6 z-50 max-w-sm"
+        className="fixed bottom-24 right-6 z-40 max-w-sm"
       >
         <div className="bg-card/95 backdrop-blur-md border border-border rounded-xl shadow-2xl overflow-hidden">
           {/* Header */}

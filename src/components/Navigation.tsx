@@ -50,6 +50,52 @@ const Navigation = () => {
     { label: t("nav.news"), href: "#news" },
   ];
 
+  const renderNavItem = (item: { label: string; href: string; external?: boolean }) => {
+    // External link (opens in new tab or same tab for /docs)
+    if (item.external) {
+      return (
+        <a
+          key={item.label}
+          href={item.href}
+          className="text-sm font-semibold text-muted-foreground hover:text-gold transition-colors relative group"
+        >
+          {item.label}
+          <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300" />
+        </a>
+      );
+    }
+    // Internal router link
+    if (item.href.startsWith("/") && !item.href.startsWith("/#")) {
+      return (
+        <Link
+          key={item.label}
+          to={item.href}
+          className="text-sm font-semibold text-muted-foreground hover:text-gold transition-colors relative group"
+        >
+          {item.label}
+          <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300" />
+        </Link>
+      );
+    }
+    // Hash link
+    return (
+      <a
+        key={item.label}
+        href={item.href}
+        onClick={(e) => {
+          if (item.href.startsWith("#")) {
+            e.preventDefault();
+            handleNavClick(item.href);
+          }
+        }}
+        className="text-sm font-semibold text-muted-foreground hover:text-gold transition-colors relative group cursor-pointer"
+      >
+        {item.label}
+        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300" />
+      </a>
+    );
+  };
+
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
@@ -66,33 +112,7 @@ const Navigation = () => {
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center space-x-8">
-              {navItems.map((item) => (
-                item.href.startsWith("/") && !item.href.startsWith("/#") ? (
-                  <Link
-                    key={item.label}
-                    to={item.href}
-                    className="text-sm font-semibold text-muted-foreground hover:text-gold transition-colors relative group"
-                  >
-                    {item.label}
-                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300" />
-                  </Link>
-                ) : (
-                  <a
-                    key={item.label}
-                    href={item.href}
-                    onClick={(e) => {
-                      if (item.href.startsWith("#")) {
-                        e.preventDefault();
-                        handleNavClick(item.href);
-                      }
-                    }}
-                    className="text-sm font-semibold text-muted-foreground hover:text-gold transition-colors relative group cursor-pointer"
-                  >
-                    {item.label}
-                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300" />
-                  </a>
-                )
-              ))}
+              {navItems.map((item) => renderNavItem(item))}
             </div>
 
             {/* Logo */}
@@ -191,7 +211,16 @@ const Navigation = () => {
           >
             <div className="p-6 space-y-4">
               {navItems.map((item) => (
-                item.href.startsWith("/") && !item.href.startsWith("/#") ? (
+                item.external ? (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block text-lg font-semibold text-foreground hover:text-gold transition-colors py-3 border-b border-border"
+                  >
+                    {item.label}
+                  </a>
+                ) : item.href.startsWith("/") && !item.href.startsWith("/#") ? (
                   <Link
                     key={item.label}
                     to={item.href}

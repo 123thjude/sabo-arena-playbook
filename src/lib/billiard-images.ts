@@ -172,22 +172,6 @@ export const BILLIARD_IMAGES = {
   ],
 
   // ============================================
-  // DỤNG CỤ / EQUIPMENT  
-  // ============================================
-  equipment: [
-    {
-      url: 'https://mogjjvscxjwvhtpkrlqr.supabase.co/storage/v1/object/public/billiard-images/techniques/techniques-3.jpg',
-      description: 'Professional cue sticks collection',
-      credit: 'Supabase Storage'
-    },
-    {
-      url: 'https://mogjjvscxjwvhtpkrlqr.supabase.co/storage/v1/object/public/billiard-images/tournaments/tournaments-2.jpg',
-      description: 'Billiard balls set - High quality',
-      credit: 'Supabase Storage'
-    }
-  ],
-
-  // ============================================
   // HERO IMAGES (Large banners)
   // ============================================
   hero: [
