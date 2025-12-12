@@ -31,6 +31,9 @@ import NewsTest from "./pages/NewsTest";
 import FullTournamentBracket from "./pages/FullTournamentBracket";
 import DocsPortal from "./pages/DocsPortal";
 import ImageAdmin from "./pages/ImageAdmin";
+import CreateTournament from "./pages/CreateTournament";
+import ClubManager from "./pages/ClubManager";
+import TournamentRegistrationPage from "./pages/TournamentRegistrationPage";
 
 const queryClient = new QueryClient();
 
@@ -43,14 +46,17 @@ const App = () => (
             <TooltipProvider>
               <Toaster />
               <Sonner />
-              <BrowserRouter>
+              <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/rankings" element={<Rankings />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/tournaments/:id" element={<TournamentDetails />} />
+                <Route path="/tournaments/:id/register" element={<TournamentRegistrationPage />} />
+                <Route path="/create-tournament" element={<CreateTournament />} />
                 <Route path="/tournament/:id/full" element={<FullTournamentBracket />} />
                 <Route path="/clubs" element={<ClubDirectory />} />
+                <Route path="/club-manager" element={<ClubManager />} />
                 <Route path="/profile" element={<MyProfile />} />
                 <Route path="/news/:slug" element={<NewsDetail />} />
                 <Route path="/ai-news-admin" element={<AINewsAdmin />} />

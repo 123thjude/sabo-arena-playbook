@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import SEOHead, { SEO_PAGES } from "@/components/SEOHead";
+import { RankRegistrationModal } from "@/components/RankRegistrationModal";
 
 const ClubDirectory = () => {
   const { t, language } = useLanguage();
@@ -334,6 +335,22 @@ const ClubDirectory = () => {
                               {t("clubs.viewDetails")}
                             </Link>
                           </Button>
+                          
+                          <RankRegistrationModal 
+                            clubId={club.id} 
+                            clubName={club.name}
+                            trigger={
+                              <Button 
+                                variant="secondary" 
+                                size="sm" 
+                                className="w-full bg-slate-800 text-white hover:bg-slate-700"
+                              >
+                                <Award className="w-4 h-4 mr-2" />
+                                Đăng ký hạng
+                              </Button>
+                            }
+                          />
+
                           {club.phone && (
                             <Button 
                               variant="ghost" 

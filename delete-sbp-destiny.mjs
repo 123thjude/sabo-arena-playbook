@@ -1,8 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://mogjjvscxjwvhtpkrlqr.supabase.co';
-// Using service role key for deletion
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vZ2pqdnNjeGp3dmh0cGtybHFyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzkxOTU4MCwiZXhwIjoyMDczNDk1NTgwfQ.T2ntQv-z2EL4mkGb9b3QyXM3dT8pAOFSPKvqWPd7Xoo';
+// 🔐 SECURITY FIX: Use environment variables instead of hardcoded keys
+// Set these before running: export SUPABASE_URL=... && export SUPABASE_SERVICE_ROLE_KEY=...
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ ERROR: Missing required environment variables!');
+  console.error('Usage: SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node delete-sbp-destiny.mjs');
+  console.error('⚠️  SECURITY: Never commit service role keys to version control!');
+  process.exit(1);
+}
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 

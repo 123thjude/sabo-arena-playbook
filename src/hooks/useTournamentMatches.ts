@@ -64,7 +64,6 @@ export const useTournamentMatches = (tournamentId: string) => {
           match_number,
           bracket_type,
           bracket_group,
-          bracket_format,
           player1_score,
           player2_score,
           is_final,

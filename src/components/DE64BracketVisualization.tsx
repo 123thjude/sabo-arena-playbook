@@ -207,7 +207,12 @@ export const DE64BracketVisualization = ({ tournamentId }: DE64BracketVisualizat
 
   // Group matches by bracket_type (WB, LB-A, LB-B, SABO) - for DE16/simple formats
   const getMatchesByType = (type: string) => {
-    return allBracketMatches.filter(m => m.bracket_type === type);
+    return allBracketMatches.filter(m => {
+      // Handle DB enum differences (LB_A vs LB-A)
+      if (type === 'LB-A') return m.bracket_type === 'LB-A' || m.bracket_type === 'LB_A';
+      if (type === 'LB-B') return m.bracket_type === 'LB-B' || m.bracket_type === 'LB_B';
+      return m.bracket_type === type;
+    });
   };
 
   // For DE64 with groups

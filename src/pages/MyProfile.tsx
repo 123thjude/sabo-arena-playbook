@@ -29,6 +29,7 @@ import Navigation from "@/components/Navigation";
 const MyProfile = () => {
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<any>(null);
+  const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -66,6 +67,20 @@ const MyProfile = () => {
           display_name: data.display_name || "",
           username: data.username || "",
         });
+
+        // Load rank requests
+        const { data: requestsData } = await supabase
+          .from("club_rank_requests")
+          .select(`
+            *,
+            club:clubs(name)
+          `)
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+          
+        if (requestsData) {
+          setRequests(requestsData);
+        }
       }
     } catch (error) {
       console.error(error);
@@ -204,10 +219,11 @@ const MyProfile = () => {
             transition={{ delay: 0.1 }}
           >
             <Tabs defaultValue="overview" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-4 max-w-2xl mx-auto">
+              <TabsList className="grid w-full grid-cols-5 max-w-3xl mx-auto">
                 <TabsTrigger value="overview">Tổng quan</TabsTrigger>
                 <TabsTrigger value="stats">Thống kê</TabsTrigger>
                 <TabsTrigger value="history">Lịch sử</TabsTrigger>
+                <TabsTrigger value="requests">Yêu cầu</TabsTrigger>
                 <TabsTrigger value="settings">Cài đặt</TabsTrigger>
               </TabsList>
 
@@ -368,6 +384,56 @@ const MyProfile = () => {
               </TabsContent>
 
               {/* Settings Tab */}
+              {/* Requests Tab */}
+              <TabsContent value="requests" className="space-y-6">
+                <Card className="border-gold/20 bg-background/95 backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Award className="w-5 h-5 text-gold" />
+                      Yêu cầu đăng ký hạng
+                    </CardTitle>
+                    <CardDescription>Theo dõi trạng thái các yêu cầu xét hạng của bạn</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {requests.length === 0 ? (
+                        <div className="text-center py-8 text-slate-400">
+                          Bạn chưa gửi yêu cầu đăng ký hạng nào.
+                        </div>
+                      ) : (
+                        requests.map((request) => (
+                          <div key={request.id} className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+                            <div>
+                              <div className="font-bold text-white mb-1">
+                                {request.club?.name || "Câu lạc bộ"}
+                              </div>
+                              <div className="text-sm text-slate-400">
+                                Đăng ký hạng: <span className="text-gold font-bold">{request.requested_rank}</span>
+                              </div>
+                              <div className="text-xs text-slate-500 mt-1">
+                                {new Date(request.created_at).toLocaleDateString('vi-VN')}
+                              </div>
+                            </div>
+                            <div>
+                              <Badge className={
+                                request.status === 'approved' 
+                                  ? "bg-green-500/20 text-green-400 hover:bg-green-500/20" 
+                                  : request.status === 'rejected'
+                                    ? "bg-red-500/20 text-red-400 hover:bg-red-500/20"
+                                    : "bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/20"
+                              }>
+                                {request.status === 'approved' ? "Đã duyệt" : 
+                                 request.status === 'rejected' ? "Từ chối" : "Đang chờ"}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               <TabsContent value="settings" className="space-y-6">
                 <Card className="border-gold/20 bg-background/95 backdrop-blur-sm">
                   <CardHeader>

@@ -33,7 +33,8 @@ import {
   Check,
   X,
   Minus,
-  Plus
+  Plus,
+  Loader2
 } from "lucide-react";
 
 // Helper function to format tournament description with auto line breaks
@@ -213,6 +214,11 @@ const TournamentDetails = () => {
   // Check if current user can edit (is CLB owner)
   const [canEdit, setCanEdit] = useState(false);
   
+  // Payment verification state
+  const [selectedParticipant, setSelectedParticipant] = useState<any>(null);
+  const [paymentProof, setPaymentProof] = useState<any>(null);
+  const [loadingProof, setLoadingProof] = useState(false);
+
   React.useEffect(() => {
     const checkEditPermission = async () => {
       if (!tournament?.club_id) return;
@@ -235,6 +241,96 @@ const TournamentDetails = () => {
     
     checkEditPermission();
   }, [tournament?.club_id]);
+
+  // Handle payment verification
+  const handleViewProof = async (participant: any) => {
+    setSelectedParticipant(participant);
+    setLoadingProof(true);
+    try {
+      const { data, error } = await supabase
+        .from('tournament_payments')
+        .select('*')
+        .eq('registration_id', participant.participant_id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      setPaymentProof(data);
+    } catch (error) {
+      console.error("Error loading proof:", error);
+      toast.error("Không thể tải thông tin thanh toán");
+    } finally {
+      setLoadingProof(false);
+    }
+  };
+
+  const handleApprovePayment = async () => {
+    if (!selectedParticipant || !paymentProof) return;
+    setIsSubmitting(true);
+    try {
+      // 1. Update payment status
+      const { error: paymentError } = await supabase
+        .from('tournament_payments')
+        .update({ 
+          status: 'verified',
+          verified_at: new Date().toISOString(),
+          verified_by: (await supabase.auth.getUser()).data.user?.id
+        })
+        .eq('id', paymentProof.id);
+      
+      if (paymentError) throw paymentError;
+
+      // 2. Update participant status
+      const { error: participantError } = await supabase
+        .from('tournament_participants')
+        .update({ 
+          payment_status: 'verified',
+          status: 'confirmed'
+        })
+        .eq('id', selectedParticipant.participant_id);
+
+      if (participantError) throw participantError;
+
+      toast.success("Đã xác nhận thanh toán!");
+      queryClient.invalidateQueries({ queryKey: ["tournament-participants", id] });
+      setSelectedParticipant(null);
+      setPaymentProof(null);
+    } catch (error) {
+      console.error("Error approving payment:", error);
+      toast.error("Có lỗi xảy ra");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRejectPayment = async () => {
+    if (!selectedParticipant || !paymentProof) return;
+    setIsSubmitting(true);
+    try {
+       const { error: paymentError } = await supabase
+        .from('tournament_payments')
+        .update({ status: 'rejected' })
+        .eq('id', paymentProof.id);
+      
+      if (paymentError) throw paymentError;
+
+      const { error: participantError } = await supabase
+        .from('tournament_participants')
+        .update({ payment_status: 'rejected' })
+        .eq('id', selectedParticipant.participant_id);
+
+      if (participantError) throw participantError;
+
+      toast.success("Đã từ chối thanh toán");
+      queryClient.invalidateQueries({ queryKey: ["tournament-participants", id] });
+      setSelectedParticipant(null);
+      setPaymentProof(null);
+    } catch (error) {
+      console.error("Error rejecting:", error);
+      toast.error("Có lỗi xảy ra");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Handle score submission
   const handleSaveScore = async () => {
@@ -653,10 +749,33 @@ const TournamentDetails = () => {
                                 <p className="font-semibold text-white text-sm md:text-base truncate">
                                   {getDisplayName(participant.display_name, participant.username, participant.full_name)}
                                 </p>
-                                {participant.rank && (
-                                  <p className="text-xs md:text-sm text-gold">Rank {participant.rank}</p>
-                                )}
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  {participant.rank && (
+                                    <p className="text-xs md:text-sm text-gold">Rank {participant.rank}</p>
+                                  )}
+                                  {/* Payment Status Badge */}
+                                  {participant.payment_status === 'verified' && (
+                                    <Badge variant="outline" className="text-xs border-green-500 text-green-500 h-5">Đã thanh toán</Badge>
+                                  )}
+                                  {participant.payment_status === 'pending' && (
+                                    <Badge variant="outline" className="text-xs border-yellow-500 text-yellow-500 h-5">Chờ xác nhận</Badge>
+                                  )}
+                                  {participant.payment_status === 'rejected' && (
+                                    <Badge variant="outline" className="text-xs border-red-500 text-red-500 h-5">Từ chối</Badge>
+                                  )}
+                                </div>
                               </div>
+                              
+                              {/* Action Button for Owner */}
+                              {canEdit && participant.payment_status === 'pending' && (
+                                <Button 
+                                  size="sm" 
+                                  className="h-8 text-xs bg-blue-600 hover:bg-blue-700"
+                                  onClick={() => handleViewProof(participant)}
+                                >
+                                  Duyệt
+                                </Button>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -824,13 +943,13 @@ const TournamentDetails = () => {
                                     WB ({matches.filter(m => m.bracket_type === 'WB').length})
                                   </TabsTrigger>
                                   <TabsTrigger value="lba" className="text-xs md:text-sm px-1 md:px-3 text-orange-400">
-                                    LB-A ({matches.filter(m => m.bracket_type === 'LB-A').length})
+                                    LB-A ({matches.filter(m => m.bracket_type === 'LB_A').length})
                                   </TabsTrigger>
                                   <TabsTrigger value="lbb" className="text-xs md:text-sm px-1 md:px-3 text-red-400">
-                                    LB-B ({matches.filter(m => m.bracket_type === 'LB-B').length})
+                                    LB-B ({matches.filter(m => m.bracket_type === 'LB_B').length})
                                   </TabsTrigger>
-                                  <TabsTrigger value="sabo" className="text-xs md:text-sm px-1 md:px-3 text-purple-400">
-                                    SABO ({matches.filter(m => m.bracket_type === 'SABO').length})
+                                  <TabsTrigger value="finals" className="text-xs md:text-sm px-1 md:px-3 text-purple-400">
+                                    Finals ({matches.filter(m => m.bracket_type === 'FINALS' || m.bracket_type === 'SABO').length})
                                   </TabsTrigger>
                                 </TabsList>
 
@@ -856,7 +975,7 @@ const TournamentDetails = () => {
                                 {/* LB-A matches */}
                                 <TabsContent value="lba" className="space-y-3 md:space-y-4 mt-0">
                                   {[...matches]
-                                    .filter(m => m.bracket_type === 'LB-A')
+                                    .filter(m => m.bracket_type === 'LB_A')
                                     .sort((a, b) => (a.round_number || 0) - (b.round_number || 0) || (a.match_number || 0) - (b.match_number || 0))
                                     .map((match, index) => (
                                       <MatchResultCard key={match.id} match={match} index={index} canEdit={canEdit} onEditScore={handleEditScore} />
@@ -866,17 +985,17 @@ const TournamentDetails = () => {
                                 {/* LB-B matches */}
                                 <TabsContent value="lbb" className="space-y-3 md:space-y-4 mt-0">
                                   {[...matches]
-                                    .filter(m => m.bracket_type === 'LB-B')
+                                    .filter(m => m.bracket_type === 'LB_B')
                                     .sort((a, b) => (a.round_number || 0) - (b.round_number || 0) || (a.match_number || 0) - (b.match_number || 0))
                                     .map((match, index) => (
                                       <MatchResultCard key={match.id} match={match} index={index} canEdit={canEdit} onEditScore={handleEditScore} />
                                     ))}
                                 </TabsContent>
 
-                                {/* SABO Finals matches */}
-                                <TabsContent value="sabo" className="space-y-3 md:space-y-4 mt-0">
+                                {/* Finals matches */}
+                                <TabsContent value="finals" className="space-y-3 md:space-y-4 mt-0">
                                   {[...matches]
-                                    .filter(m => m.bracket_type === 'SABO')
+                                    .filter(m => m.bracket_type === 'FINALS' || m.bracket_type === 'SABO')
                                     .sort((a, b) => (a.round_number || 0) - (b.round_number || 0) || (a.match_number || 0) - (b.match_number || 0))
                                     .map((match, index) => (
                                       <MatchResultCard key={match.id} match={match} index={index} canEdit={canEdit} onEditScore={handleEditScore} />
@@ -1049,6 +1168,75 @@ const TournamentDetails = () => {
                   {isSubmitting ? "Đang lưu..." : "Lưu điểm"}
                 </Button>
               </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+      {/* Payment Verification Modal */}
+      <Dialog open={!!selectedParticipant} onOpenChange={(open) => !open && setSelectedParticipant(null)}>
+        <DialogContent className="bg-slate-800 border-slate-700 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white">Xác nhận thanh toán</DialogTitle>
+          </DialogHeader>
+          
+          {loadingProof ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-gold" />
+            </div>
+          ) : paymentProof ? (
+            <div className="space-y-4">
+              <div className="bg-slate-900 p-4 rounded-lg">
+                <p className="text-sm text-slate-400 mb-1">Người gửi</p>
+                <p className="font-semibold text-white">
+                  {getDisplayName(selectedParticipant?.display_name, selectedParticipant?.username, selectedParticipant?.full_name)}
+                </p>
+                <p className="text-sm text-slate-400 mt-2 mb-1">Số tiền</p>
+                <p className="font-bold text-gold text-lg">{formatCurrency(paymentProof.amount)}</p>
+                
+                {paymentProof.transaction_reference && (
+                  <>
+                    <p className="text-sm text-slate-400 mt-2 mb-1">Mã giao dịch</p>
+                    <p className="text-white font-mono">{paymentProof.transaction_reference}</p>
+                  </>
+                )}
+              </div>
+
+              {paymentProof.receipt_image_url ? (
+                <div className="aspect-[3/4] w-full bg-black rounded-lg overflow-hidden border border-slate-700">
+                  <img 
+                    src={paymentProof.receipt_image_url} 
+                    alt="Proof" 
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-yellow-200 text-sm text-center">
+                  Không có ảnh xác nhận
+                </div>
+              )}
+
+              <DialogFooter className="gap-2 sm:justify-between">
+                <Button 
+                  variant="destructive" 
+                  onClick={handleRejectPayment}
+                  disabled={isSubmitting}
+                  className="flex-1"
+                >
+                  Từ chối
+                </Button>
+                <Button 
+                  onClick={handleApprovePayment}
+                  disabled={isSubmitting}
+                  className="bg-green-600 hover:bg-green-700 flex-1"
+                >
+                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Check className="h-4 w-4 mr-2" />}
+                  Xác nhận
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-slate-400">
+              Không tìm thấy thông tin thanh toán
             </div>
           )}
         </DialogContent>

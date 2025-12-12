@@ -50,6 +50,10 @@ const Navigation = () => {
     { label: t("nav.news"), href: "#news" },
   ];
 
+  if (user) {
+    navItems.splice(2, 0, { label: "Tạo Giải Đấu", href: "/create-tournament" });
+  }
+
   const renderNavItem = (item: { label: string; href: string; external?: boolean }) => {
     // External link (opens in new tab or same tab for /docs)
     if (item.external) {
@@ -176,6 +180,9 @@ const Navigation = () => {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link to="/profile">{t("nav.profile")}</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/club-manager">Quản lý CLB</Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={signOut}>

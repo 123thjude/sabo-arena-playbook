@@ -12,7 +12,8 @@ const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXB
 export const supabaseAdmin = createClient(supabaseUrl!, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
-    persistSession: false
+    persistSession: false,
+    storageKey: 'supabase-admin-auth-token'
   },
   db: {
     schema: 'public'

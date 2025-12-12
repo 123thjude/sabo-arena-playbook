@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useDeepLink } from "@/hooks/useDeepLink";
@@ -45,6 +46,7 @@ interface TournamentRegistrationProps {
 const TournamentRegistration = ({ tournament }: TournamentRegistrationProps) => {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const { deviceInfo, smartRedirect, getUniversalLink, openApp } = useDeepLink();
   
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -75,7 +77,7 @@ const TournamentRegistration = ({ tournament }: TournamentRegistrationProps) => 
         });
       } else {
         // Web registration
-        globalThis.location.href = `/tournaments/${tournament.id}/register`;
+        navigate(`/tournaments/${tournament.id}/register`);
       }
     } catch (error) {
       console.error("Registration failed:", error);

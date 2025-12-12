@@ -13,6 +13,13 @@ export interface TournamentParticipant {
   total_wins: number;
   total_losses: number;
   tournament_wins: number;
+  // Registration details
+  participant_id: string; // The ID of the tournament_participants record
+  status: string;
+  payment_status: string | null;
+  payment_method_id: string | null;
+  notes: string | null;
+  registered_at: string | null;
 }
 
 export const useTournamentParticipants = (tournamentId: string) => {
@@ -58,6 +65,9 @@ export const useTournamentParticipants = (tournamentId: string) => {
           id,
           user_id,
           status,
+          payment_status,
+          payment_method_id,
+          notes,
           registered_at,
           seed_number,
           users (
@@ -74,7 +84,7 @@ export const useTournamentParticipants = (tournamentId: string) => {
           )
         `)
         .eq("tournament_id", tournamentId)
-        .in("status", ["registered", "confirmed", "checked_in", "pending"])
+        .in("status", ["registered", "confirmed", "checked_in", "pending", "approved"])
         .order("seed_number", { ascending: true, nullsFirst: false })
         .order("registered_at", { ascending: true });
 
@@ -94,6 +104,13 @@ export const useTournamentParticipants = (tournamentId: string) => {
         total_wins: p.users?.total_wins || 0,
         total_losses: p.users?.total_losses || 0,
         tournament_wins: p.users?.tournament_wins || 0,
+        // Registration details
+        participant_id: p.id,
+        status: p.status,
+        payment_status: p.payment_status,
+        payment_method_id: p.payment_method_id,
+        notes: p.notes,
+        registered_at: p.registered_at,
       })) as TournamentParticipant[];
     },
     enabled: !!tournamentId,
